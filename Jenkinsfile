@@ -21,8 +21,8 @@ def raas = [
 
 // List of targets with supported modem families
 def target_families = [
-  "UBLOX": ["UBLOX_C027", "UBLOX_C030"],
-  "MultiTech": ["MTS_DRAGONFLY_F411RE"]
+  "UBLOX": ["UBLOX_C027"],
+  "MTS_DRAGONFLY": ["MTS_DRAGONFLY_F411RE"]
   ]
 
 // Supported Modems
@@ -35,8 +35,8 @@ def targets = [
 // Map toolchains to compilers
 def toolchains = [
   ARM: "armcc",
-  GCC_ARM: "arm-none-eabi-gcc",
-  IAR: "iar_arm"
+  GCC_ARM: "arm-none-eabi-gcc"//,
+  //IAR: "iar_arm"
   ]
 
 def stepsForParallel = [:]
@@ -50,11 +50,6 @@ for (int i = 0; i < target_families.size(); i++) {
       def target = targets.get(k)
       def toolchain = toolchains.keySet().asList().get(j)
       def compilerLabel = toolchains.get(toolchain)
-
-      // Skip unwanted combination
-      if (target_family == "NUCLEO_F401RE" && toolchain == "IAR") {
-        continue
-      }
 
       def stepName = "${target_family} ${toolchain}"
       if(allowed_target_type.contains(target)) {
@@ -92,6 +87,9 @@ def buildStep(target_family, target, compilerLabel, toolchain) {
         dir("mbed-os-example-cellular-minimal") {
           checkout scm
           def config_file = "mbed_app.json"
+
+           // Change target type
+          execute("sed -i 's/\"platform\": .*/\"platform\": \"${target_family}\"/' ${config_file}")
 
           // Activate traces
           execute("sed -i 's/\"mbed-trace.enable\": false/\"mbed-trace.enable\": true/' ${config_file}")
