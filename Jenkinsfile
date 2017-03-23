@@ -20,16 +20,16 @@ def raas = [
   ]
 
 // List of targets with supported modem families
-def targets = [
-  "UBLOX": ["UBLOX_C027", "UBLOX_C027"],
-  "MTS_DRAGONFLY": ["MTS_DRAGONFLY"]
+def target_families = [
+  "UBLOX": ["UBLOX_C027", "UBLOX_C030"],
+  "MultiTech": ["MTS_DRAGONFLY_F411RE"]
   ]
 
 // Supported Modems
-def modems = [
+def targets = [
   "UBLOX_C027",
-  "UBLOX_C027",
-  "MTS_DRAGONFLY"
+  "UBLOX_C030",
+  "MTS_DRAGONFLY_F411RE"
 ]
 
 // Map toolchains to compilers
@@ -42,21 +42,24 @@ def toolchains = [
 def stepsForParallel = [:]
 
 // Jenkins pipeline does not support map.each, we need to use oldschool for loop
-for (int i = 0; i < targets.size(); i++) {
+for (int i = 0; i < target_families.size(); i++) {
   for(int j = 0; j < toolchains.size(); j++) {
-      def target = targets.keySet().asList().get(i)
-      def allowed_modem_type = targets.get(target)
+    for(int k = 0; k < targets.size(); k++) {
+      def target_family = target_families.keySet().asList().get(i)
+      def allowed_target_type = target_families.get(target_family)
+      def target = targets.get(k)
       def toolchain = toolchains.keySet().asList().get(j)
       def compilerLabel = toolchains.get(toolchain)
 
       // Skip unwanted combination
-      if (target == "NUCLEO_F401RE" && toolchain == "IAR") {
+      if (target_family == "NUCLEO_F401RE" && toolchain == "IAR") {
         continue
       }
 
-      def stepName = "${target} ${toolchain}"
-      if(allowed_modem_type.contains(modems)) {
-        stepsForParallel[stepName] = buildStep(target, compilerLabel, toolchain)
+      def stepName = "${target_family} ${toolchain}"
+      if(allowed_target_type.contains(target)) {
+        stepsForParallel[stepName] = buildStep(target_family, target, compilerLabel, toolchain)
+      }
     }
   }
 }
@@ -81,9 +84,9 @@ timestamps {
   parallel parallelRunSmoke
 }
 
-def buildStep(target, compilerLabel, toolchain) {
+def buildStep(target_family, target, compilerLabel, toolchain) {
   return {
-    stage ("${target}_${compilerLabel}") {
+    stage ("${target_family}_${target}_${compilerLabel}") {
       node ("${compilerLabel}") {
         deleteDir()
         dir("mbed-os-example-cellular-minimal") {
@@ -95,9 +98,9 @@ def buildStep(target, compilerLabel, toolchain) {
 
           // Set mbed-os to revision received as parameter
           execute ("mbed deploy --protocol ssh")
-          dir ("mbed-os") {
-            execute ("git checkout ${env.MBED_OS_REVISION}")
-          }
+          //dir ("mbed-os") {
+          //  execute ("git checkout ${env.MBED_OS_REVISION}")
+          //}
 
           execute ("mbed compile --build out/${target}_${toolchain}/ -m ${target} -t ${toolchain} -c --app-config ${config_file}")
         }
