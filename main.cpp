@@ -60,7 +60,7 @@ static void unlock()
 }
 
 // main() runs in its own thread in the OS
-// (note the calls to wait below for delays)
+
 
 int do_ntp()
 {
