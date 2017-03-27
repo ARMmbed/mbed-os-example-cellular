@@ -70,7 +70,7 @@ if ( params.smoke_test == true ) {
     def raasPort = raas.get(suite_to_run)
     // Parallel execution needs unique step names. Remove .json file ending.
     def smokeStep = "${raasPort} ${suite_to_run.substring(0, suite_to_run.indexOf('.'))}"
-    parallelRunSmoke[smokeStep] = run_smoke(targets, toolchains, raasPort, suite_to_run, modems)
+    parallelRunSmoke[smokeStep] = run_smoke(target_families, raasPort, suite_to_run, toolchains, targets)
   }
 }
 
@@ -110,7 +110,7 @@ def buildStep(target_family, target, compilerLabel, toolchain) {
   }
 }
 
-def run_smoke(targets, toolchains, raasPort, suite_to_run, modems) {
+def run_smoke(target_families, raasPort, suite_to_run, toolchains, targets) {
   return {
     // Remove .json from suite name
     def suiteName = suite_to_run.substring(0, suite_to_run.indexOf('.'))
@@ -124,19 +124,26 @@ def run_smoke(targets, toolchains, raasPort, suite_to_run, modems) {
 
           dir("testcases") {
             execute("git checkout master")
-            dir("6lowpan") {
+            dir("cellular") {
               execute("git checkout master")
             }
           }
+        
+    for (int i = 0; i < target_families.size(); i++) {
+      for(int j = 0; j < toolchains.size(); j++) {
+        for(int k = 0; k < targets.size(); k++) {
+            def target_family = target_families.keySet().asList().get(i)
+            def allowed_target_type = target_families.get(target_family)
+            def target = targets.get(k)
+            def toolchain = toolchains.keySet().asList().get(j)
 
-          for (int i = 0; i < targets.size(); i++) {
-            for(int j = 0; j < toolchains.size(); j++) {
-              def target = targets.keySet().asList().get(i)
-              def allowed_modems = targets.get(target)
-              def toolchain = toolchains.keySet().asList().get(j)
+            if(allowed_target_type.contains(target)) {
+              unstash "${target}_${toolchain}"
             }
-          }
-         
+        }
+      }
+    }
+
           env.RAAS_USERNAME = "user"
           env.RAAS_PASSWORD = "user"
           execute("python clitest.py --suitedir testcases/suites/ --suite ${suite_to_run} --type hardware --reset --raas 193.208.80.31:${raasPort} --tcdir testcases/cellular  --failure_return_value -vvv -w --log log_${raasPort}_${suiteName}")
