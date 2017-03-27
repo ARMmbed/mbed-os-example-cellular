@@ -139,7 +139,7 @@ def run_smoke(targets, toolchains, raasPort, suite_to_run, modems) {
          
           env.RAAS_USERNAME = "user"
           env.RAAS_PASSWORD = "user"
-          execute("python clitest.py --suitedir testcases/suites/ --suite ${suite_to_run} --type hardware --reset --raas 193.208.80.31:${raasPort} --failure_return_value -vvv -w --log log_${raasPort}_${suiteName}")
+          execute("python clitest.py --suitedir testcases/suites/ --suite ${suite_to_run} --type hardware --reset --raas 193.208.80.31:${raasPort} --tcdir testcases/cellular  --failure_return_value -vvv -w --log log_${raasPort}_${suiteName}")
           archive "log_${raasPort}_${suiteName}/**/*"
         }
       }
