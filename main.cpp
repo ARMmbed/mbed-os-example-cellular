@@ -7,11 +7,10 @@
 #define MTS_DRAGONFLY   1
 
 #if MBED_CONF_APP_PLATFORM == UBLOX
-#include "UbloxCellularInterface.h"
-#include "ublox_low_level_api.h"
+#include "ublox_modem_driver/UbloxCellularInterface.h"
 UbloxCellularInterface *iface;
 #elif MBED_CONF_APP_PLATFORM == MTS_DRAGONFLY
-#include "DragonFlyCellularInterface.h"
+#include "dragonfly_modem_driver/DragonFlyCellularInterface.h"
 DragonFlyCellularInterface *iface;
 #endif
 #include "UDPSocket.h"

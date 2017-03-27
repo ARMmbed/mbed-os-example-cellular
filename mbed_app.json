@@ -1,7 +1,6 @@
 {
     "config": {
-        "platform": { "help": "Options: UBLOX, MTS_DRAGONFLY",
-        			  "value": "UBLOX"}
+        "platform": "UBLOX"
     },
     "macros": ["OS_MAINSTKSIZE=512"],
     "target_overrides": {
