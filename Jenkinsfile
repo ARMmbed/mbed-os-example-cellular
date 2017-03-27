@@ -16,7 +16,7 @@ try {
 
 // Map RaaS instances to corresponding test suites
 def raas = [
-  "cellular_minimal_smoke_ublox.json": "8072"
+  "cellular_minimal_smoke_ublox_c027.json": "8072"
   ]
 
 // List of targets with supported modem families
