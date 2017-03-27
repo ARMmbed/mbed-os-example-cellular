@@ -59,7 +59,7 @@ static void unlock()
 }
 
 // main() runs in its own thread in the OS
-// (note the calls to wait below for delays)
+
 
 int do_ntp()
 {
@@ -196,16 +196,17 @@ int main()
 
     iface->connection_lost_notification_cb(ppp_connection_down_cb);
 
-   retcode  = connection();
-   if (retcode == NSAPI_ERROR_AUTH_FAILURE) {
-       tr_error("Authentication Failure. Exiting application");
-       return -1;
-   }
+    tr_debug("Connecting...");
+    retcode  = connection();
+    if (retcode == NSAPI_ERROR_AUTH_FAILURE) {
+        tr_error("Authentication Failure. Exiting application");
+        return -1;
+    }
 
-   if (getTime() == 0) {
-       tr_info("Done.");
-   }
+    if (getTime() == 0) {
+        tr_info("Done.");
+    }
 
-   return 0;
+    return 0;
 }
 
