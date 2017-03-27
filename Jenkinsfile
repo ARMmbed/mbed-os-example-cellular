@@ -1,6 +1,6 @@
 properties ([[$class: 'ParametersDefinitionProperty', parameterDefinitions: [
   [$class: 'StringParameterDefinition', name: 'mbed_os_revision', defaultValue: 'mbed-os-5.4', description: 'Revision of mbed-os to build'],
-  [$class: 'BooleanParameterDefinition', name: 'smoke_test', defaultValue: false, description: 'Runs HW smoke tests on Cellular devices']
+  [$class: 'BooleanParameterDefinition', name: 'smoke_test', defaultValue: true, description: 'Runs HW smoke tests on Cellular devices']
   ]]])
 
 echo "Run smoke tests: ${params.smoke_test}"
@@ -122,8 +122,10 @@ def run_smoke(target_families, raasPort, suite_to_run, toolchains, targets) {
           git "git@github.com:ARMmbed/mbed-clitest.git"
           execute("git checkout master")
           execute("git submodule update --init --recursive testcases")
-
+          
           dir("testcases") {
+            execute("git all checkout master")
+            execute("git submodule update --init --recursive cellular")
             execute("git all checkout master")
           }
         
