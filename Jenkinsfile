@@ -120,14 +120,11 @@ def run_smoke(target_families, raasPort, suite_to_run, toolchains, targets) {
         deleteDir()
         dir("mbed-clitest") {
           git "git@github.com:ARMmbed/mbed-clitest.git"
-          execute("git checkout ${env.LATEST_CLITEST_REL}")
+          execute("git checkout master")
           execute("git submodule update --init --recursive testcases")
 
           dir("testcases") {
-            execute("git checkout master")
-            dir("cellular") {
-              execute("git checkout master")
-            }
+            execute("git all checkout master")
           }
         
     for (int i = 0; i < target_families.size(); i++) {
