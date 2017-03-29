@@ -16,7 +16,8 @@ try {
 
 // Map RaaS instances to corresponding test suites
 def raas = [
-  "cellular_minimal_smoke_ublox_c027.json": "8072"
+  "cellular_minimal_smoke_ublox_c027.json": "8072",
+  "cellular_minimal_smoke_mts_dragonfly.json": "8072"
   ]
 
 // List of targets with supported modem families
@@ -51,7 +52,7 @@ for (int i = 0; i < target_families.size(); i++) {
       def toolchain = toolchains.keySet().asList().get(j)
       def compilerLabel = toolchains.get(toolchain)
 
-      def stepName = "${target_family} ${toolchain}"
+      def stepName = "${target} ${toolchain}"
       if(allowed_target_type.contains(target)) {
         stepsForParallel[stepName] = buildStep(target_family, target, compilerLabel, toolchain)
       }
@@ -146,8 +147,13 @@ def run_smoke(target_families, raasPort, suite_to_run, toolchains, targets) {
 
           env.RAAS_USERNAME = "user"
           env.RAAS_PASSWORD = "user"
-          execute("python clitest.py --suitedir testcases/suites/ --suite ${suite_to_run} --type hardware --reset --raas 193.208.80.31:${raasPort} --tcdir testcases/cellular  --failure_return_value -vvv -w --log log_${raasPort}_${suiteName}")
-          archive "log_${raasPort}_${suiteName}/**/*"
+          if (target == "MTS_DRAGONFLY_F411RE")  {
+            execute("python clitest.py --suitedir testcases/suites/ --suite ${suite_to_run} --type hardware --reset hard --raas 193.208.80.31:${raasPort} --tcdir testcases/cellular  --failure_return_value -vvv -w --log log_${raasPort}_${suiteName}")
+          }
+          else {
+            execute("python clitest.py --suitedir testcases/suites/ --suite ${suite_to_run} --type hardware --reset --raas 193.208.80.31:${raasPort} --tcdir testcases/cellular  --failure_return_value -vvv -w --log log_${raasPort}_${suiteName}")
+          }
+         archive "log_${raasPort}_${suiteName}/**/*"
         }
       }
     }
