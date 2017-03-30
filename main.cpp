@@ -127,7 +127,7 @@ int do_ntp()
 }
 
 #if MBED_CONF_APP_PLATFORM == UBLOX
-UbloxCellularInterface my_iface(false, true);
+UbloxCellularInterface my_iface(false);
 #elif MBED_CONF_APP_PLATFORM == MTS_DRAGONFLY
 DragonFlyCellularInterface my_iface(false);
 #endif
