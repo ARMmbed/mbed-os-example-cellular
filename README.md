@@ -1,1 +1,1 @@
-# mbed-os-example-cellular-minimal
+# mbed-os-example-cellular
