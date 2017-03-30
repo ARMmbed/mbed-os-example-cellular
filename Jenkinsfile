@@ -16,7 +16,8 @@ try {
 
 // Map RaaS instances to corresponding test suites
 def raas = [
-  "cellular_minimal_smoke_ublox_c027.json": "8072"
+  "cellular_smoke_ublox_c027.json": "8072",
+  "cellular_smoke_mts_dragonfly.json": "8072"
   ]
 
 // List of targets with supported modem families
@@ -51,7 +52,7 @@ for (int i = 0; i < target_families.size(); i++) {
       def toolchain = toolchains.keySet().asList().get(j)
       def compilerLabel = toolchains.get(toolchain)
 
-      def stepName = "${target_family} ${toolchain}"
+      def stepName = "${target} ${toolchain}"
       if(allowed_target_type.contains(target)) {
         stepsForParallel[stepName] = buildStep(target_family, target, compilerLabel, toolchain)
       }
@@ -84,7 +85,7 @@ def buildStep(target_family, target, compilerLabel, toolchain) {
     stage ("${target_family}_${target}_${compilerLabel}") {
       node ("${compilerLabel}") {
         deleteDir()
-        dir("mbed-os-example-cellular-minimal") {
+        dir("mbed-os-example-cellular") {
           checkout scm
           def config_file = "mbed_app.json"
 
@@ -102,8 +103,8 @@ def buildStep(target_family, target, compilerLabel, toolchain) {
 
           execute ("mbed compile --build out/${target}_${toolchain}/ -m ${target} -t ${toolchain} -c --app-config ${config_file}")
         }
-        stash name: "${target}_${toolchain}", includes: '**/mbed-os-example-cellular-minimal.bin'
-        archive '**/mbed-os-example-cellular-minimal.bin'
+        stash name: "${target}_${toolchain}", includes: '**/mbed-os-example-cellular.bin'
+        archive '**/mbed-os-example-cellular.bin'
         step([$class: 'WsCleanup'])
       }
     }
@@ -112,6 +113,8 @@ def buildStep(target_family, target, compilerLabel, toolchain) {
 
 def run_smoke(target_families, raasPort, suite_to_run, toolchains, targets) {
   return {
+    env.RAAS_USERNAME = "user"
+    env.RAAS_PASSWORD = "user"
     // Remove .json from suite name
     def suiteName = suite_to_run.substring(0, suite_to_run.indexOf('.'))
     stage ("smoke_${raasPort}_${suiteName}") {
@@ -121,33 +124,35 @@ def run_smoke(target_families, raasPort, suite_to_run, toolchains, targets) {
         dir("mbed-clitest") {
           git "git@github.com:ARMmbed/mbed-clitest.git"
           execute("git checkout master")
-          execute("git submodule update --init --recursive testcases")
-          
-          dir("testcases") {
+          dir("mbed-clitest-suites") {
+            git "git@github.com:ARMmbed/mbed-clitest-suites.git"
+            execute("git submodule update --init --recursive")
             execute("git all checkout master")
-            execute("git submodule update --init --recursive cellular")
-            execute("git all checkout master")
-          }
-        
-    for (int i = 0; i < target_families.size(); i++) {
-      for(int j = 0; j < toolchains.size(); j++) {
-        for(int k = 0; k < targets.size(); k++) {
-            def target_family = target_families.keySet().asList().get(i)
-            def allowed_target_type = target_families.get(target_family)
-            def target = targets.get(k)
-            def toolchain = toolchains.keySet().asList().get(j)
-
-            if(allowed_target_type.contains(target)) {
-              unstash "${target}_${toolchain}"
+            dir("cellular") {
+              execute("git checkout master")
             }
-        }
-      }
-    }
+          }
+                
+          for (int i = 0; i < target_families.size(); i++) {
+            for(int j = 0; j < toolchains.size(); j++) {
+              for(int k = 0; k < targets.size(); k++) {
+                def target_family = target_families.keySet().asList().get(i)
+                def allowed_target_type = target_families.get(target_family)
+                def target = targets.get(k)
+                def toolchain = toolchains.keySet().asList().get(j)
 
-          env.RAAS_USERNAME = "user"
-          env.RAAS_PASSWORD = "user"
-          execute("python clitest.py --suitedir testcases/suites/ --suite ${suite_to_run} --type hardware --reset --raas 193.208.80.31:${raasPort} --tcdir testcases/cellular  --failure_return_value -vvv -w --log log_${raasPort}_${suiteName}")
-          archive "log_${raasPort}_${suiteName}/**/*"
+                if(allowed_target_type.contains(target)) {
+                  unstash "${target}_${toolchain}"
+                }
+              }
+            }
+          }     
+          if ("${suiteName}" == "cellular_smoke_mts_dragonfly")  {
+            execute("python clitest.py --suitedir mbed-clitest-suites/suites/ --suite ${suite_to_run} --type hardware --reset hard --raas 193.208.80.31:${raasPort} --tcdir mbed-clitest-suites/cellular  --failure_return_value -vvv -w --log log_${raasPort}_${suiteName}")
+          } else {
+            execute("python clitest.py --suitedir mbed-clitest-suites/suites/ --suite ${suite_to_run} --type hardware --reset --raas 193.208.80.31:${raasPort} --tcdir mbed-clitest-suites/cellular  --failure_return_value -vvv -w --log log_${raasPort}_${suiteName}")
+          }
+         archive "log_${raasPort}_${suiteName}/**/*"
         }
       }
     }
