@@ -36,8 +36,8 @@ def targets = [
 // Map toolchains to compilers
 def toolchains = [
   ARM: "armcc",
-  GCC_ARM: "arm-none-eabi-gcc"//,
-  //IAR: "iar_arm"
+  GCC_ARM: "arm-none-eabi-gcc",
+  IAR: "iar_arm"
   ]
 
 def stepsForParallel = [:]
@@ -148,9 +148,9 @@ def run_smoke(target_families, raasPort, suite_to_run, toolchains, targets) {
             }
           }     
           if ("${suiteName}" == "cellular_smoke_mts_dragonfly")  {
-            execute("python clitest.py --suitedir mbed-clitest-suites/suites/ --suite ${suite_to_run} --type hardware --reset hard --raas 193.208.80.31:${raasPort} --tcdir mbed-clitest-suites/cellular  --failure_return_value -vvv -w --log log_${raasPort}_${suiteName}")
+            execute("python clitest.py --suitedir mbed-clitest-suites/suites/ --suite ${suite_to_run} --type hardware --reset hard --raas 62.44.193.186:${raasPort} --tcdir mbed-clitest-suites/cellular  --failure_return_value -vvv -w --log log_${raasPort}_${suiteName}")
           } else {
-            execute("python clitest.py --suitedir mbed-clitest-suites/suites/ --suite ${suite_to_run} --type hardware --reset --raas 193.208.80.31:${raasPort} --tcdir mbed-clitest-suites/cellular  --failure_return_value -vvv -w --log log_${raasPort}_${suiteName}")
+            execute("python clitest.py --suitedir mbed-clitest-suites/suites/ --suite ${suite_to_run} --type hardware --reset --raas 62.44.193.186:${raasPort} --tcdir mbed-clitest-suites/cellular  --failure_return_value -vvv -w --log log_${raasPort}_${suiteName}")
           }
          archive "log_${raasPort}_${suiteName}/**/*"
         }
