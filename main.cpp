@@ -126,10 +126,14 @@ int do_ntp()
     return -1;
 }
 
+#ifndef MODEM_DEBUG_TRACE
+#define MODEM_DEBUG_TRACE false
+#endif
+
 #if MBED_CONF_APP_PLATFORM == UBLOX
-UbloxCellularInterface my_iface(false);
+UbloxCellularInterface my_iface(false, MODEM_DEBUG_TRACE);
 #elif MBED_CONF_APP_PLATFORM == MTS_DRAGONFLY
-DragonFlyCellularInterface my_iface(false);
+DragonFlyCellularInterface my_iface(false, MODEM_DEBUG_TRACE);
 #endif
 
 nsapi_error_t connection()
@@ -141,7 +145,7 @@ nsapi_error_t connection()
 
         retcode = iface->connect();
         if (retcode == NSAPI_ERROR_AUTH_FAILURE) {
-            tr_error("Authentication Failure. Exiting application");
+            printf("\n\nAuthentication Failure. Exiting application\n");
             return retcode;
         } else if (retcode != NSAPI_ERROR_OK) {
             tr_error("Couldn't connect: %d", retcode);
@@ -151,7 +155,7 @@ nsapi_error_t connection()
         break;
     }
 
-    tr_info("Connection Established.");
+    printf("\n\nConnection Established.\n");
 
     return NSAPI_ERROR_OK;
 }
@@ -204,7 +208,7 @@ int main()
     }
 
     if (getTime() == 0) {
-        tr_info("Done.");
+        printf("\n\nDone.\n");
     }
 
     return 0;
