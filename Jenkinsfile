@@ -16,21 +16,19 @@ try {
 
 // Map RaaS instances to corresponding test suites
 def raas = [
-  "cellular_smoke_ublox_c027.json": "8072",
-  "cellular_smoke_mts_dragonfly.json": "8072"
+  "cellular_smoke_ublox_c027.json": "8072"
+  // Currently dragonfly is not supported by RAAS, skip it 
+  //"cellular_smoke_mts_dragonfly.json": "8072"
   ]
 
 // List of targets with supported modem families
 def target_families = [
-  "UBLOX": ["UBLOX_C027"],
-  "MTS_DRAGONFLY": ["MTS_DRAGONFLY_F411RE"]
+  "UBLOX": ["UBLOX_C027"]
   ]
 
 // Supported Modems
 def targets = [
-  "UBLOX_C027",
-  "UBLOX_C030",
-  "MTS_DRAGONFLY_F411RE"
+  "UBLOX_C027"
 ]
 
 // Map toolchains to compilers
