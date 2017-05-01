@@ -89,9 +89,6 @@ def buildStep(target_family, target, compilerLabel, toolchain) {
           checkout scm
           def config_file = "mbed_app.json"
 
-           // Change target type
-          execute("sed -i 's/\"platform\": .*/\"platform\": \"${target_family}\"/' ${config_file}")
-
           // Activate traces
           execute("sed -i 's/\"mbed-trace.enable\": false/\"mbed-trace.enable\": true/' ${config_file}")
 

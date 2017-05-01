@@ -2,17 +2,7 @@
 #include <inttypes.h>
 #include "mbed.h"
 #include "BufferedSerial.h"
-
-#define UBLOX           0
-#define MTS_DRAGONFLY   1
-
-#if MBED_CONF_APP_PLATFORM == UBLOX
-#include "ublox_modem_driver/UbloxCellularInterface.h"
-UbloxCellularInterface *iface;
-#elif MBED_CONF_APP_PLATFORM == MTS_DRAGONFLY
-#include "dragonfly_modem_driver/DragonFlyCellularInterface.h"
-DragonFlyCellularInterface *iface;
-#endif
+#include "ReferenceCellularInterface.h"
 #include "UDPSocket.h"
 #include "common_functions.h"
 #if defined(FEATURE_COMMON_PAL)
@@ -24,6 +14,7 @@ DragonFlyCellularInterface *iface;
 #define tr_error(...) (void(0)) //dummies if feature common pal is not added
 #endif //defined(FEATURE_COMMON_PAL)
 
+ReferenceCellularInterface iface;
 UDPSocket *socket;
 static const char *host_name = "2.pool.ntp.org";
 static const int port = 123;
@@ -58,9 +49,6 @@ static void unlock()
     mtx.unlock();
 }
 
-// main() runs in its own thread in the OS
-
-
 int do_ntp()
 {
     int ntp_values[12] = { 0 };
@@ -68,14 +56,14 @@ int do_ntp()
 
     UDPSocket sock;
 
-    int ret = sock.open(iface);
+    int ret = sock.open(&iface);
     if (ret) {
         tr_error("UDPSocket.open() fails, code: %d", ret);
         return -1;
     }
 
     SocketAddress nist;
-    ret = iface->gethostbyname(host_name, &nist);
+    ret = iface.gethostbyname(host_name, &nist);
     if (ret) {
         tr_error("Couldn't resolve remote host: %s, code: %d", host_name, ret);
         return -1;
@@ -126,24 +114,14 @@ int do_ntp()
     return -1;
 }
 
-#ifndef MODEM_DEBUG_TRACE
-#define MODEM_DEBUG_TRACE false
-#endif
-
-#if MBED_CONF_APP_PLATFORM == UBLOX
-UbloxCellularInterface my_iface(false, MODEM_DEBUG_TRACE);
-#elif MBED_CONF_APP_PLATFORM == MTS_DRAGONFLY
-DragonFlyCellularInterface my_iface(false, MODEM_DEBUG_TRACE);
-#endif
-
 nsapi_error_t connection()
 {
     nsapi_error_t retcode;
     bool disconnected = false;
 
-    while (!iface->isConnected()) {
+    while (!iface.isConnected()) {
 
-        retcode = iface->connect();
+        retcode = iface.connect();
         if (retcode == NSAPI_ERROR_AUTH_FAILURE) {
             printf("\n\nAuthentication Failure. Exiting application\n");
             return retcode;
@@ -163,7 +141,7 @@ nsapi_error_t connection()
 int getTime()
 {
     int retcode = -1;
-    if (iface->isConnected()) {
+    if (iface.isConnected()) {
         retcode = do_ntp();
     } else {
         /* Determine why the network is down */
@@ -193,12 +171,11 @@ int main()
 
     nsapi_error_t retcode = NSAPI_ERROR_OK;
 
-    iface = &my_iface;
-    iface->set_SIM_pin("1234");
+    iface.set_SIM_pin("1234");
 
-    iface->set_credentials("internet");
+    iface.set_credentials("internet");
 
-    iface->connection_lost_notification_cb(ppp_connection_down_cb);
+    iface.connection_status_cb(ppp_connection_down_cb);
 
     tr_debug("Connecting...");
     retcode  = connection();

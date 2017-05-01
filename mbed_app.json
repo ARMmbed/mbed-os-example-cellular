@@ -1,8 +1,5 @@
 {
-    "config": {
-        "platform": "UBLOX"
-    },
-    "macros": ["OS_MAINSTKSIZE=512", "MODEM_DEBUG_TRACE=true"],
+    "macros": ["OS_MAINSTKSIZE=512"],
     "target_overrides": {
         "*": {
             "lwip.ipv4-enabled": true,
@@ -15,8 +12,8 @@
             "platform.stdio-baud-rate": 115200,
             "platform.default-serial-baud-rate": 115200, 
             "lwip.debug-enabled":false,
-            "lwip.enable-ppp-trace": true,
-            "lwip.use-mbed-trace": true,
+            "lwip.enable-ppp-trace": false,
+            "lwip.use-mbed-trace": false,
             "mbed-trace.enable": 1
         }
     }
