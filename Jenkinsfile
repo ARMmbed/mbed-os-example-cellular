@@ -16,28 +16,26 @@ try {
 
 // Map RaaS instances to corresponding test suites
 def raas = [
-  "cellular_smoke_ublox_c027.json": "8072",
-  "cellular_smoke_mts_dragonfly.json": "8072"
+  "cellular_smoke_ublox_c027.json": "8072"
+  // Currently dragonfly is not supported by RAAS, skip it 
+  //"cellular_smoke_mts_dragonfly.json": "8072"
   ]
 
 // List of targets with supported modem families
 def target_families = [
-  "UBLOX": ["UBLOX_C027"],
-  "MTS_DRAGONFLY": ["MTS_DRAGONFLY_F411RE"]
+  "UBLOX": ["UBLOX_C027"]
   ]
 
 // Supported Modems
 def targets = [
-  "UBLOX_C027",
-  "UBLOX_C030",
-  "MTS_DRAGONFLY_F411RE"
+  "UBLOX_C027"
 ]
 
 // Map toolchains to compilers
 def toolchains = [
   ARM: "armcc",
-  GCC_ARM: "arm-none-eabi-gcc"//,
-  //IAR: "iar_arm"
+  GCC_ARM: "arm-none-eabi-gcc",
+  IAR: "iar_arm"
   ]
 
 def stepsForParallel = [:]
@@ -88,9 +86,6 @@ def buildStep(target_family, target, compilerLabel, toolchain) {
         dir("mbed-os-example-cellular") {
           checkout scm
           def config_file = "mbed_app.json"
-
-           // Change target type
-          execute("sed -i 's/\"platform\": .*/\"platform\": \"${target_family}\"/' ${config_file}")
 
           // Activate traces
           execute("sed -i 's/\"mbed-trace.enable\": false/\"mbed-trace.enable\": true/' ${config_file}")
@@ -148,9 +143,9 @@ def run_smoke(target_families, raasPort, suite_to_run, toolchains, targets) {
             }
           }     
           if ("${suiteName}" == "cellular_smoke_mts_dragonfly")  {
-            execute("python clitest.py --suitedir mbed-clitest-suites/suites/ --suite ${suite_to_run} --type hardware --reset hard --raas 193.208.80.31:${raasPort} --tcdir mbed-clitest-suites/cellular  --failure_return_value -vvv -w --log log_${raasPort}_${suiteName}")
+            execute("python clitest.py --suitedir mbed-clitest-suites/suites/ --suite ${suite_to_run} --type hardware --reset hard --raas 62.44.193.186:${raasPort} --tcdir mbed-clitest-suites/cellular  --failure_return_value -vvv -w --log log_${raasPort}_${suiteName}")
           } else {
-            execute("python clitest.py --suitedir mbed-clitest-suites/suites/ --suite ${suite_to_run} --type hardware --reset --raas 193.208.80.31:${raasPort} --tcdir mbed-clitest-suites/cellular  --failure_return_value -vvv -w --log log_${raasPort}_${suiteName}")
+            execute("python clitest.py --suitedir mbed-clitest-suites/suites/ --suite ${suite_to_run} --type hardware --reset --raas 62.44.193.186:${raasPort} --tcdir mbed-clitest-suites/cellular  --failure_return_value -vvv -w --log log_${raasPort}_${suiteName}")
           }
          archive "log_${raasPort}_${suiteName}/**/*"
         }
