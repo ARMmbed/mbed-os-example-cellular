@@ -1,20 +1,18 @@
 {
-    "macros": ["OS_MAINSTKSIZE=512"],
+	"config": {
+		"sock-type": "UDP",
+		"modem_trace": false
+	},
     "target_overrides": {
         "*": {
             "lwip.ipv4-enabled": true,
-            "lwip.ipv6-enabled": false,
             "lwip.ethernet-enabled": false,
             "lwip.ppp-enabled": true,
-            "lwip.tcp-enabled": false,
-            "target.features_add": ["LWIP"],
+            "lwip.tcp-enabled": true,
+            "target.features_add": ["LWIP", "COMMON_PAL"],
             "platform.stdio-convert-newlines": true,
             "platform.stdio-baud-rate": 115200,
-            "platform.default-serial-baud-rate": 115200, 
-            "lwip.debug-enabled":false,
-            "lwip.enable-ppp-trace": false,
-            "lwip.use-mbed-trace": false,
-            "mbed-trace.enable": 1
+            "platform.default-serial-baud-rate": 115200
         }
     }
 }

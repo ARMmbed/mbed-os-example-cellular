@@ -38,21 +38,30 @@ def toolchains = [
   IAR: "iar_arm"
   ]
 
+// supported socket tests
+def sockets = [
+  "udp",
+  "tcp"
+]
+
 def stepsForParallel = [:]
 
 // Jenkins pipeline does not support map.each, we need to use oldschool for loop
 for (int i = 0; i < target_families.size(); i++) {
   for(int j = 0; j < toolchains.size(); j++) {
     for(int k = 0; k < targets.size(); k++) {
-      def target_family = target_families.keySet().asList().get(i)
-      def allowed_target_type = target_families.get(target_family)
-      def target = targets.get(k)
-      def toolchain = toolchains.keySet().asList().get(j)
-      def compilerLabel = toolchains.get(toolchain)
+      for(int l = 0; l < sockets.size(); l++) {
+        def target_family = target_families.keySet().asList().get(i)
+        def allowed_target_type = target_families.get(target_family)
+        def target = targets.get(k)
+        def toolchain = toolchains.keySet().asList().get(j)
+        def compilerLabel = toolchains.get(toolchain)
+        def stepName = "${target} ${toolchain}"
+        def socket = sockets.get(l)
 
-      def stepName = "${target} ${toolchain}"
-      if(allowed_target_type.contains(target)) {
-        stepsForParallel[stepName] = buildStep(target_family, target, compilerLabel, toolchain)
+        if(allowed_target_type.contains(target)) {
+          stepsForParallel[stepName] = buildStep(target_family, target, compilerLabel, toolchain, socket)
+        }
       }
     }
   }
@@ -65,11 +74,15 @@ def parallelRunSmoke = [:]
 if ( params.smoke_test == true ) {
   // Generate smoke tests based on suite amount
   for(int i = 0; i < raas.size(); i++) {
-    def suite_to_run = raas.keySet().asList().get(i)
-    def raasPort = raas.get(suite_to_run)
-    // Parallel execution needs unique step names. Remove .json file ending.
-    def smokeStep = "${raasPort} ${suite_to_run.substring(0, suite_to_run.indexOf('.'))}"
-    parallelRunSmoke[smokeStep] = run_smoke(target_families, raasPort, suite_to_run, toolchains, targets)
+  	for(int j = 0; j < sockets.size(); j++) {
+    	def suite_to_run = raas.keySet().asList().get(i)
+    	def raasPort = raas.get(suite_to_run)
+    	def socket = sockets.get(j)
+    
+    	// Parallel execution needs unique step names. Remove .json file ending.
+    	def smokeStep = "${raasPort} ${suite_to_run.substring(0, suite_to_run.indexOf('.'))}"
+    	parallelRunSmoke[smokeStep] = run_smoke(target_families, raasPort, suite_to_run, toolchains, targets, socket)
+    }
   }
 }
 
@@ -78,7 +91,7 @@ timestamps {
   parallel parallelRunSmoke
 }
 
-def buildStep(target_family, target, compilerLabel, toolchain) {
+def buildStep(target_family, target, compilerLabel, toolchain, socket) {
   return {
     stage ("${target_family}_${target}_${compilerLabel}") {
       node ("${compilerLabel}") {
@@ -88,7 +101,12 @@ def buildStep(target_family, target, compilerLabel, toolchain) {
           def config_file = "mbed_app.json"
 
           // Activate traces
-          execute("sed -i 's/\"mbed-trace.enable\": false/\"mbed-trace.enable\": true/' ${config_file}")
+          //execute("sed -i 's/\"mbed-trace.enable\": false/\"mbed-trace.enable\": true/' ${config_file}")
+
+          //change socket typembed_app.json
+
+
+          execute("sed -i 's/\"sock-type\": .*/\"sock-type\": \"${socket}\",/' ${config_file}")
 
           // Set mbed-os to revision received as parameter
           execute ("mbed deploy --protocol ssh")
@@ -98,7 +116,7 @@ def buildStep(target_family, target, compilerLabel, toolchain) {
 
           execute ("mbed compile --build out/${target}_${toolchain}/ -m ${target} -t ${toolchain} -c --app-config ${config_file}")
         }
-        stash name: "${target}_${toolchain}", includes: '**/mbed-os-example-cellular.bin'
+        stash name: "${target}_${toolchain}_${socket}", includes: '**/mbed-os-example-cellular.bin'
         archive '**/mbed-os-example-cellular.bin'
         step([$class: 'WsCleanup'])
       }
@@ -106,7 +124,7 @@ def buildStep(target_family, target, compilerLabel, toolchain) {
   }
 }
 
-def run_smoke(target_families, raasPort, suite_to_run, toolchains, targets) {
+def run_smoke(target_families, raasPort, suite_to_run, toolchains, targets, socket) {
   return {
     env.RAAS_USERNAME = "user"
     env.RAAS_PASSWORD = "user"
@@ -131,15 +149,15 @@ def run_smoke(target_families, raasPort, suite_to_run, toolchains, targets) {
           for (int i = 0; i < target_families.size(); i++) {
             for(int j = 0; j < toolchains.size(); j++) {
               for(int k = 0; k < targets.size(); k++) {
-                def target_family = target_families.keySet().asList().get(i)
-                def allowed_target_type = target_families.get(target_family)
-                def target = targets.get(k)
-                def toolchain = toolchains.keySet().asList().get(j)
+            	 def target_family = target_families.keySet().asList().get(i)
+                 def allowed_target_type = target_families.get(target_family)
+                 def target = targets.get(k)
+                 def toolchain = toolchains.keySet().asList().get(j)
 
-                if(allowed_target_type.contains(target)) {
-                  unstash "${target}_${toolchain}"
-                }
-              }
+                 if(allowed_target_type.contains(target)) {
+                    unstash "${target}_${toolchain}_${socket}"
+                  }
+              	}
             }
           }     
           if ("${suiteName}" == "cellular_smoke_mts_dragonfly")  {

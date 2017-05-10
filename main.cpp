@@ -1,133 +1,51 @@
-#define __STDC_FORMAT_MACROS 1
-#include <inttypes.h>
 #include "mbed.h"
-#include "BufferedSerial.h"
-#include "ReferenceCellularInterface.h"
-#include "UDPSocket.h"
 #include "common_functions.h"
-#if defined(FEATURE_COMMON_PAL)
-#include "mbed_trace.h"
-#define TRACE_GROUP "MAIN"
-#else
-#define tr_debug(...) (void(0)) //dummies if feature common pal is not added
-#define tr_info(...)  (void(0)) //dummies if feature common pal is not added
-#define tr_error(...) (void(0)) //dummies if feature common pal is not added
-#endif //defined(FEATURE_COMMON_PAL)
+#include "UDPSocket.h"
+#include "OnboardCellularInterface.h"
 
-ReferenceCellularInterface iface;
-UDPSocket *socket;
-static const char *host_name = "2.pool.ntp.org";
-static const int port = 123;
-static Mutex mtx;
-static nsapi_error_t connection_down_reason = 0;
+#define UDP 0
+#define TCP 1
 
-void ppp_connection_down_cb(nsapi_error_t error)
-{
-    switch (error) {
-        case NSAPI_ERROR_CONNECTION_LOST:
-        case NSAPI_ERROR_NO_CONNECTION:
-            tr_debug("Carrier/Connection lost");
-            break;
-        case NSAPI_ERROR_CONNECTION_TIMEOUT:
-            tr_debug("Connection timed out.");
-            break;
-        case NSAPI_ERROR_AUTH_FAILURE:
-            tr_debug("Authentication failure");
-            break;
-    }
+// SIM pin code goes here
+#define PIN_CODE    "1234"
 
-    connection_down_reason = error;
-}
+// Network credentials like APN go here, e.g.,
+// "apn, username, password"
+#define CREDENTIALS "internet"
 
-static void lock()
-{
-    mtx.lock();
-}
+// Number of retries /
+#define RETRY_COUNT 3
 
-static void unlock()
-{
-    mtx.unlock();
-}
+// CellularInterface object
+OnboardCellularInterface iface;
 
-int do_ntp()
-{
-    int ntp_values[12] = { 0 };
-    time_t TIME1970 = 2208988800U;
+// NIST ntp hostname
+const char *host_name = "echo.u-blox.com";
 
-    UDPSocket sock;
+// NIST ntp port
+const int port = 7;
 
-    int ret = sock.open(&iface);
-    if (ret) {
-        tr_error("UDPSocket.open() fails, code: %d", ret);
-        return -1;
-    }
-
-    SocketAddress nist;
-    ret = iface.gethostbyname(host_name, &nist);
-    if (ret) {
-        tr_error("Couldn't resolve remote host: %s, code: %d", host_name, ret);
-        return -1;
-    }
-    nist.set_port(port);
-
-    tr_info("UDP: NIST server %s address: %s on port %d", host_name,
-           nist.get_ip_address(), nist.get_port());
-
-    memset(ntp_values, 0x00, sizeof(ntp_values));
-    ntp_values[0] = '\x1b';
-
-    sock.set_timeout(5000);
-
-    int ret_send = sock.sendto(nist, (void*) ntp_values, sizeof(ntp_values));
-    tr_debug("UDP: Sent %d Bytes to NTP server", ret_send);
-
-    const int n = sock.recvfrom(&nist, (void*) ntp_values, sizeof(ntp_values));
-    sock.close();
-
-    if (n > 0) {
-        tr_debug("UDP: Recved from NTP server %d Bytes", n);
-        tr_debug("UDP: Values returned by NTP server:");
-        for (size_t i = 0; i < sizeof(ntp_values) / sizeof(ntp_values[0]);
-                ++i) {
-            tr_debug("\t[%02d] 0x%" PRIX32, i,
-                   common_read_32_bit((uint8_t*) &(ntp_values[i])));
-            if (i == 10) {
-                const time_t timestamp = common_read_32_bit(
-                        (uint8_t*) &(ntp_values[i])) - TIME1970;
-                struct tm *local_time = localtime(&timestamp);
-                if (local_time) {
-                    char time_string[25];
-                    if (strftime(time_string, sizeof(time_string),
-                                 "%a %b %d %H:%M:%S %Y", local_time) > 0) {
-                        tr_info("NTP timestamp is %s", time_string);
-                    }
-                }
-            }
-        }
-        return 0;
-    }
-
-    if (n == NSAPI_ERROR_WOULD_BLOCK) {
-        return -1;
-    }
-
-    return -1;
-}
-
-nsapi_error_t connection()
+/**
+ * Connects to the Cellular Network
+ */
+nsapi_error_t do_connect()
 {
     nsapi_error_t retcode;
-    bool disconnected = false;
+    uint8_t retry_counter = 0;
 
-    while (!iface.isConnected()) {
+    while (!iface.is_connected()) {
 
         retcode = iface.connect();
         if (retcode == NSAPI_ERROR_AUTH_FAILURE) {
             printf("\n\nAuthentication Failure. Exiting application\n");
             return retcode;
         } else if (retcode != NSAPI_ERROR_OK) {
-            tr_error("Couldn't connect: %d", retcode);
+            printf("\n\nCouldn't connect: %d, will retry\n", retcode);
+            retry_counter++;
             continue;
+        } else if (retcode != NSAPI_ERROR_OK && retry_counter > RETRY_COUNT) {
+            printf("\n\nFatal connection failure: %d\n", retcode);
+            return retcode;
         }
 
         break;
@@ -138,56 +56,102 @@ nsapi_error_t connection()
     return NSAPI_ERROR_OK;
 }
 
-int getTime()
+/**
+ * Opens a UDP or a TCP socket with the given echo server and performs an echo
+ * transaction retrieving current.
+ */
+nsapi_error_t test_send_recv()
 {
-    int retcode = -1;
-    if (iface.isConnected()) {
-        retcode = do_ntp();
-    } else {
-        /* Determine why the network is down */
-        tr_warn("Connection down: %d", connection_down_reason);
+    nsapi_size_or_error_t retcode;
+#if MBED_CONF_APP_SOCK_TYPE == TCP
+    TCPSocket sock;
+#else
+    UDPSocket sock;
+#endif
 
-        if (connection_down_reason == NSAPI_ERROR_AUTH_FAILURE) {
-            tr_debug("Authentication Error");
-        } else if (connection_down_reason == NSAPI_ERROR_NO_CONNECTION
-                || NSAPI_ERROR_CONNECTION_LOST) {
-            tr_debug("Carrier lost");
-        } else if (connection_down_reason == NSAPI_ERROR_CONNECTION_TIMEOUT) {
-            tr_debug("Connection timed out");
-        }
-
+    retcode = sock.open(&iface);
+    if (retcode != NSAPI_ERROR_OK) {
+        printf("UDPSocket.open() fails, code: %d\n", retcode);
         return -1;
     }
 
-    return 0;
+    SocketAddress sock_addr;
+    retcode = iface.gethostbyname(host_name, &sock_addr);
+    if (retcode != NSAPI_ERROR_OK) {
+        printf("Couldn't resolve remote host: %s, code: %d\n", host_name,
+               retcode);
+        return -1;
+    }
+
+    sock_addr.set_port(port);
+
+    sock.set_timeout(15000);
+    int n = 0;
+    char *echo_string = "TEST";
+    char recv_buf[4];
+#if MBED_CONF_APP_SOCK_TYPE == TCP
+    retcode = sock.connect(sock_addr);
+    if (retcode < 0) {
+        printf("TCPSocket.connect() fails, code: %d\n", retcode);
+        return -1;
+    } else {
+        printf("TCP: connected with %s server\n", host_name);
+    }
+    retcode = sock.send((void*) echo_string, sizeof(echo_string));
+    if (retcode < 0) {
+        printf("TCPSocket.send() fails, code: %d\n", retcode);
+        return -1;
+    } else {
+        printf("TCP: Sent %d Bytes to %s\n", retcode, host_name);
+    }
+
+    n = sock.recv((void*) recv_buf, sizeof(recv_buf));
+#else
+
+    retcode = sock.sendto(sock_addr, (void*) echo_string, sizeof(echo_string));
+    if (retcode < 0) {
+        printf("UDPSocket.sendto() fails, code: %d\n", retcode);
+        return -1;
+    } else {
+        printf("UDP: Sent %d Bytes to %s\n", retcode, host_name);
+    }
+
+    n = sock.recvfrom(&sock_addr, (void*) recv_buf, sizeof(recv_buf));
+#endif
+
+    sock.close();
+
+    if (n > 0) {
+        printf("Received from echo server %d Bytes\n", n);
+        return 0;
+    }
+
+    return -1;
+
+    return retcode;
 }
 
 int main()
 {
-    mbed_trace_init();
+    iface.modem_debug_on(MBED_CONF_APP_MODEM_TRACE);
+    /* Set Pin code for SIM card */
+    iface.set_sim_pin(PIN_CODE);
 
-    mbed_trace_mutex_wait_function_set(lock);
-    mbed_trace_mutex_release_function_set(unlock);
+    /* Set network credentials here, e.g., APN*/
+    iface.set_credentials(CREDENTIALS);
 
-    nsapi_error_t retcode = NSAPI_ERROR_OK;
+    printf("\n\nmbed-os-example-cellular, Connecting...\n");
 
-    iface.set_SIM_pin("1234");
-
-    iface.set_credentials("internet");
-
-    iface.connection_status_cb(ppp_connection_down_cb);
-
-    tr_debug("Connecting...");
-    retcode  = connection();
-    if (retcode == NSAPI_ERROR_AUTH_FAILURE) {
-        tr_error("Authentication Failure. Exiting application");
-        return -1;
+    /* Attempt to connect to a cellular network */
+    if (do_connect() == NSAPI_ERROR_OK) {
+        nsapi_error_t retcode = test_send_recv();
+        if (retcode == NSAPI_ERROR_OK) {
+            printf("\n\nSuccess. Exiting \n\n");
+            return 0;
+        }
     }
 
-    if (getTime() == 0) {
-        printf("\n\nDone.\n");
-    }
-
-    return 0;
+    printf("\n\nFailure. Exiting \n\n");
+    return -1;
 }
-
+// EOF
