@@ -1,7 +1,26 @@
 {
-	"config": {
-		"sock-type": "UDP",
-		"modem_trace": false
+    "config": {
+        "sock-type": "UDP",
+        "modem_trace": {
+            "help": "Turns AT command trace on/off from the cellular modem, defaults to off",
+            "value": false
+        },
+        "sim-pin-code": {
+            "help": "SIM PIN code",
+            "value": "\"1234\""
+        },
+        "apn": {
+            "help": "The APN string to use for this SIM/network, set to 0 if none",
+            "value": "\"internet\""
+        },
+        "username": {
+            "help": "The user name string to use for this APN, set to zero if none",
+            "value": 0
+        },
+        "password": {
+            "help": "The password string to use for this APN, set to 0 if none",
+            "value": 0
+        }
 	},
     "target_overrides": {
         "*": {
