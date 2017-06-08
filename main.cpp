@@ -7,11 +7,19 @@
 #define TCP 1
 
 // SIM pin code goes here
-#define PIN_CODE    "1234"
+#ifndef MBED_CONF_APP_SIM_PIN_CODE
+# define MBED_CONF_APP_SIM_PIN_CODE    "1234"
+#endif
 
-// Network credentials like APN go here, e.g.,
-// "apn, username, password"
-#define CREDENTIALS "internet"
+#ifndef MBED_CONF_APP_APN
+# define MBED_CONF_APP_APN         "internet"
+#endif
+#ifndef MBED_CONF_APP_USERNAME
+# define MBED_CONF_APP_USERNAME    NULL
+#endif
+#ifndef MBED_CONF_APP_PASSWORD
+# define MBED_CONF_APP_PASSWORD    NULL
+#endif
 
 // Number of retries /
 #define RETRY_COUNT 3
@@ -19,10 +27,10 @@
 // CellularInterface object
 OnboardCellularInterface iface;
 
-// NIST ntp hostname
+// Echo server hostname
 const char *host_name = "echo.u-blox.com";
 
-// NIST ntp port
+// Echo server port (same for TCP and UDP)
 const int port = 7;
 
 /**
@@ -135,10 +143,10 @@ int main()
 {
     iface.modem_debug_on(MBED_CONF_APP_MODEM_TRACE);
     /* Set Pin code for SIM card */
-    iface.set_sim_pin(PIN_CODE);
+    iface.set_sim_pin(MBED_CONF_APP_SIM_PIN_CODE);
 
     /* Set network credentials here, e.g., APN*/
-    iface.set_credentials(CREDENTIALS);
+    iface.set_credentials(MBED_CONF_APP_APN, MBED_CONF_APP_USERNAME, MBED_CONF_APP_PASSWORD);
 
     printf("\n\nmbed-os-example-cellular, Connecting...\n");
 
