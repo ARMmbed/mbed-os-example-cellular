@@ -24,11 +24,11 @@
 	},
     "target_overrides": {
         "*": {
+            "target.features_add": ["LWIP", "COMMON_PAL"],
             "lwip.ipv4-enabled": true,
             "lwip.ethernet-enabled": false,
             "lwip.ppp-enabled": true,
             "lwip.tcp-enabled": true,
-            "target.features_add": ["LWIP", "COMMON_PAL"],
             "platform.stdio-convert-newlines": true,
             "platform.stdio-baud-rate": 115200,
             "platform.default-serial-baud-rate": 115200
