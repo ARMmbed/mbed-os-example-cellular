@@ -1,4 +1,4 @@
-# Example cellulaur application for mbed OS
+# Example cellular application for mbed OS
 
 This is a simple example based upon mbed-os celular APIs that demonstrates a simple TCP or UDP echo transaction with a public echo server. 
 
