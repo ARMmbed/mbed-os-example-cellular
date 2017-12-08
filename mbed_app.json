@@ -1,6 +1,6 @@
 {
     "config": {
-        "sock-type": "UDP",
+        "sock-type": "TCP",
         "modem_trace": {
             "help": "Turns AT command trace on/off from the cellular modem, defaults to off",
             "value": false
