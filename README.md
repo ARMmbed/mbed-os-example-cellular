@@ -4,13 +4,13 @@ This is an example based on `mbed-os` cellular APIs that demonstrates a TCP or U
 
 ## Getting started
 
-This particular cellular application uses a cellular network and network-socket APIs that are part of [`mbed-os`](github.com/armmbed/mbed-os).
+This particular cellular application uses a cellular network and network-socket APIs that are part of [`mbed-os`](https://github.com/ARMmbed/mbed-os).
 
 The program uses a [generic cellular modem driver](https://github.com/ARMmbed/mbed-os/tree/master/features/netsocket/cellular/generic_modem_driver) using an external IP stack (LWIP) standard 3GPP AT 27.007 AT commands to setup the cellular modem and registers to the network.
 
 After registration, the driver opens a point-to-point protocol (PPP) pipe using LWIP with the cellular modem and connects to internet. This driver currently supports UART data connection type only between your cellular modem and MCU.
 
-For more information on ARM mbed OS cellular APIs and porting guide, please visit the [mbed OS cellular documentation](https://docs.mbed.com/docs/mbed-os-api-reference/en/latest/APIs/communication/cellular/).
+For more information on ARM mbed OS cellular APIs and porting guide, please visit the [mbed OS cellular documentation](https://os.mbed.com/docs/latest/reference/cellular-api.html).
 
 ### Download the application
 
@@ -86,7 +86,7 @@ $ mbed compile -m YOUR_TARGET_WITH_MODEM -t GCC_ARM
 
 Drag and drop the application binary from `BUILD/YOUR_TARGET_WITH_MODEM/GCC_ARM/mbed-os-example-cellular.bin` to your mbed Enabled target hardware, which appears as a USB device on your host machine.
 
-Attach a serial console emulator of your choice (for example, PuTTY, Minicom or screen) to your USB device. Set the baudrate to 115200, and reset your board by pressing the reset button.
+Attach a serial console emulator of your choice (for example, PuTTY, Minicom or screen) to your USB device. Set the baudrate to 115200 bit/s, and reset your board by pressing the reset button.
 
 You should see an output similar to this:
 
@@ -102,3 +102,7 @@ Received from echo server 4 Bytes
 Success. Exiting
 
 ```
+
+## Troubleshooting
+
+If you have problems, you can review the [documentation](https://os.mbed.com/docs/latest/tutorials/debugging.html) for suggestions on what could be wrong and how to fix it.
