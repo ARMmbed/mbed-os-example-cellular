@@ -60,6 +60,7 @@ void print_function(const char *input_string)
 {
     PrintMutex.lock();
     printf("%s", input_string);
+    fflush(NULL);
     PrintMutex.unlock();
 }
 
@@ -69,7 +70,7 @@ void dot_event()
     while (true) {
         wait(4);
         if (!iface.is_connected()) {
-            print_function("Connection not ready...\n");
+            print_function(".");
         } else {
             break;
         }
@@ -203,7 +204,8 @@ int main()
     /* Set network credentials here, e.g., APN*/
     iface.set_credentials(MBED_CONF_APP_APN, MBED_CONF_APP_USERNAME, MBED_CONF_APP_PASSWORD);
 
-    print_function("\n\nmbed-os-example-cellular, Connecting...\n");
+    print_function("\n\nmbed-os-example-cellular\n");
+    print_function("Establishing connection ");
     dot_thread.start(dot_event);
 
     /* Attempt to connect to a cellular network */
