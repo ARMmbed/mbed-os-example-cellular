@@ -49,7 +49,9 @@ See the file `mbed_app.json` in the root directory of your application. This fil
 
 ### Selecting socket type (TCP or UDP)
 
-You can choose which socket type the application should use, however please note that TCP is more reliable tranmission protocol. For example:
+
+You can choose which socket type the application should use, however please note that TCP is a more reliable tranmission protocol. For example:
+
 
 ```json
 
