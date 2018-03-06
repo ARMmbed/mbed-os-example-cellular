@@ -18,17 +18,18 @@
 #include "common_functions.h"
 #include "UDPSocket.h"
 #include "OnboardCellularInterface.h"
+#include "mbed-trace/mbed_trace.h"
 
 #define UDP 0
 #define TCP 1
 
 // SIM pin code goes here
 #ifndef MBED_CONF_APP_SIM_PIN_CODE
-# define MBED_CONF_APP_SIM_PIN_CODE    "1234"
+# define MBED_CONF_APP_SIM_PIN_CODE    NULL
 #endif
 
 #ifndef MBED_CONF_APP_APN
-# define MBED_CONF_APP_APN         "internet"
+# define MBED_CONF_APP_APN         NULL
 #endif
 #ifndef MBED_CONF_APP_USERNAME
 # define MBED_CONF_APP_USERNAME    NULL
@@ -39,6 +40,10 @@
 
 // Number of retries /
 #define RETRY_COUNT 3
+// Number of send-recv iterations /
+#define SEND_RECV_COUNT 5
+// Number of open-send-recv-close iterations /
+#define OPEN_SEND_RECV_CLOSE_COUNT 5
 
 
 
@@ -46,7 +51,7 @@
 OnboardCellularInterface iface;
 
 // Echo server hostname
-const char *host_name = "echo.u-blox.com";
+const char *host_name = "echo.mbedcloudtesting.com";
 
 // Echo server port (same for TCP and UDP)
 const int port = 7;
@@ -125,18 +130,22 @@ nsapi_error_t test_send_recv()
     UDPSocket sock;
 #endif
 
-    retcode = sock.open(&iface);
-    if (retcode != NSAPI_ERROR_OK) {
-        snprintf(print_text, PRINT_TEXT_LENGTH, "UDPSocket.open() fails, code: %d\n", retcode);
-        print_function(print_text);
-        return -1;
-    }
-
     SocketAddress sock_addr;
+    print_function("Getting host by name: ");
     retcode = iface.gethostbyname(host_name, &sock_addr);
     if (retcode != NSAPI_ERROR_OK) {
         snprintf(print_text, PRINT_TEXT_LENGTH, "Couldn't resolve remote host: %s, code: %d\n", host_name,
                retcode);
+        print_function(print_text);
+        return -1;
+    } else {
+        snprintf(print_text, PRINT_TEXT_LENGTH, "%s\n", sock_addr.get_ip_address());
+        print_function(print_text);
+    }
+
+    retcode = sock.open(&iface);
+    if (retcode != NSAPI_ERROR_OK) {
+        snprintf(print_text, PRINT_TEXT_LENGTH, "Socket.open() fails, code: %d\n", retcode);
         print_function(print_text);
         return -1;
     }
@@ -144,7 +153,6 @@ nsapi_error_t test_send_recv()
     sock_addr.set_port(port);
 
     sock.set_timeout(15000);
-    int n = 0;
     const char *echo_string = "TEST";
     char recv_buf[4];
 #if MBED_CONF_APP_SOCK_TYPE == TCP
@@ -157,38 +165,55 @@ nsapi_error_t test_send_recv()
         snprintf(print_text, PRINT_TEXT_LENGTH, "TCP: connected with %s server\n", host_name);
         print_function(print_text);
     }
-    retcode = sock.send((void*) echo_string, sizeof(echo_string));
-    if (retcode < 0) {
-        snprintf(print_text, PRINT_TEXT_LENGTH, "TCPSocket.send() fails, code: %d\n", retcode);
-        print_function(print_text);
-        return -1;
-    } else {
-        snprintf(print_text, PRINT_TEXT_LENGTH, "TCP: Sent %d Bytes to %s\n", retcode, host_name);
-        print_function(print_text);
-    }
-
-    n = sock.recv((void*) recv_buf, sizeof(recv_buf));
-#else
-
-    retcode = sock.sendto(sock_addr, (void*) echo_string, sizeof(echo_string));
-    if (retcode < 0) {
-        snprintf(print_text, PRINT_TEXT_LENGTH, "UDPSocket.sendto() fails, code: %d\n", retcode);
-        print_function(print_text);
-        return -1;
-    } else {
-        snprintf(print_text, PRINT_TEXT_LENGTH, "UDP: Sent %d Bytes to %s\n", retcode, host_name);
-        print_function(print_text);
-    }
-
-    n = sock.recvfrom(&sock_addr, (void*) recv_buf, sizeof(recv_buf));
 #endif
 
+    int tries = 0;
+    int success_count = 0;
+    while (tries < SEND_RECV_COUNT) {
+#if MBED_CONF_APP_SOCK_TYPE == TCP
+        retcode = sock.send((void*) echo_string, sizeof(echo_string));
+        if (retcode < 0) {
+            snprintf(print_text, PRINT_TEXT_LENGTH, "TCPSocket.send() fails, code: %d\n", retcode);
+            print_function(print_text);
+            return -1;
+        } else {
+            snprintf(print_text, PRINT_TEXT_LENGTH, "TCP: Sent %d Bytes to %s\n", retcode, host_name);
+            print_function(print_text);
+        }
+
+        retcode = sock.recv((void*) recv_buf, sizeof(recv_buf));
+#else
+        retcode = sock.sendto(sock_addr, (void*) echo_string, sizeof(echo_string));
+
+        if (retcode < 0) {
+            snprintf(print_text, PRINT_TEXT_LENGTH, "UDPSocket.sendto() fails, code: %d\n", retcode);
+            print_function(print_text);
+            continue;
+        } else {
+            snprintf(print_text, PRINT_TEXT_LENGTH, "UDP: Sent %d Bytes to %s\n", retcode, host_name);
+            print_function(print_text);
+        }
+        retcode = sock.recvfrom(&sock_addr, (void*) recv_buf, sizeof(recv_buf));
+
+        if (retcode > 0) {
+            snprintf(print_text, PRINT_TEXT_LENGTH, "UDP: Received from echo server %d Bytes\n", retcode);
+            print_function(print_text);
+            success_count++;
+        } else {
+            snprintf(print_text, PRINT_TEXT_LENGTH, "UDPSocket.recvfrom() fails, code: %d\n", retcode);
+            print_function(print_text);
+        }
+
+        tries++;
+        wait(1);
+#endif
+    }
     sock.close();
 
-    if (n > 0) {
-        snprintf(print_text, PRINT_TEXT_LENGTH, "Received from echo server %d Bytes\n", n);
+    if (success_count) {
+        snprintf(print_text, PRINT_TEXT_LENGTH, "\nSuccess count for send/recv to echo server: %d out of %d tries\n\n", success_count, SEND_RECV_COUNT);
         print_function(print_text);
-        return 0;
+        return NSAPI_ERROR_OK;
     }
 
     return -1;
@@ -196,6 +221,7 @@ nsapi_error_t test_send_recv()
 
 int main()
 {
+    mbed_trace_init();
 
     iface.modem_debug_on(MBED_CONF_APP_MODEM_TRACE);
     /* Set Pin code for SIM card */
@@ -210,9 +236,22 @@ int main()
 
     /* Attempt to connect to a cellular network */
     if (do_connect() == NSAPI_ERROR_OK) {
-        nsapi_error_t retcode = test_send_recv();
-        if (retcode == NSAPI_ERROR_OK) {
-            print_function("\n\nSuccess. Exiting \n\n");
+        int tries = 0;
+        int success_count = 0;
+        while (tries < OPEN_SEND_RECV_CLOSE_COUNT) {
+            nsapi_error_t retcode = test_send_recv();
+            if (retcode != NSAPI_ERROR_OK) {
+                snprintf(print_text, PRINT_TEXT_LENGTH, "\nFailure to send/recv to echo server.\n\n");
+                print_function(print_text);
+            } else {
+                success_count++;
+            }
+            tries++;
+            wait(1);
+        }
+        if (success_count) {
+            snprintf(print_text, PRINT_TEXT_LENGTH, "\n\nSuccess count for open/send/recv/close to echo server: %d out of %d tries. Exiting \n\n", success_count, OPEN_SEND_RECV_CLOSE_COUNT);
+            print_function(print_text);
             return 0;
         }
     }
