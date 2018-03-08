@@ -95,7 +95,7 @@ for (int i = 0; i < target_families.size(); i++) {
 def parallelRunSmoke = [:]
 
 // Need to compare boolean against string value
-if ( env.SMOKE_TEST == true ) {
+if ( params.smoke_test == true ) {
   // Generate smoke tests based on suite amount
   for(int i = 0; i < raas.size(); i++) {
   	for(int j = 0; j < sockets.size(); j++) {
