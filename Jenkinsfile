@@ -20,7 +20,7 @@ properties
   ]
 ])
 
-if (env.MBED_OS_REVISION == null) {
+if (!env.MBED_OS_REVISION) {
   echo 'First run with this branch, using default parameter values'
   env.MBED_OS_REVISION = ''
   env.SMOKE_TEST = true
@@ -38,7 +38,7 @@ echo "Run smoke tests: ${env.SMOKE_TEST}"
 
 // Map RaaS instances to corresponding test suites
 def raas = [
-  "cellular_smoke_ublox_c027.json": "8072",
+  //"cellular_smoke_ublox_c027.json": "8072",
   "cellular_smoke_mtb_mts_dragonfly.json": "8119"
 ]
 
@@ -50,7 +50,7 @@ def target_families = [
 
 // Supported Modems
 def targets = [
-  "UBLOX_C027",
+  //"UBLOX_C027",
   "MTB_MTS_DRAGONFLY"
 ]
 
@@ -95,7 +95,7 @@ for (int i = 0; i < target_families.size(); i++) {
 def parallelRunSmoke = [:]
 
 // Need to compare boolean against string value
-if ( env.SMOKE_TEST == "true" ) {
+if (env.SMOKE_TEST) {
   // Generate smoke tests based on suite amount
   for(int i = 0; i < raas.size(); i++) {
   	for(int j = 0; j < sockets.size(); j++) {
@@ -166,7 +166,7 @@ def run_smoke(target_families, raasPort, suite_to_run, toolchains, targets, sock
     def suiteName = suite_to_run.substring(0, suite_to_run.indexOf('.'))
     stage ("smoke_${raasPort}_${suiteName}") {
       //node is actually the type of machine, i.e., mesh-test boild down to linux
-      node ("mesh-test") {
+      node ("linux") {
         deleteDir()
         dir("mbed-clitest") {
           git "git@github.com:ARMmbed/mbed-clitest.git"
