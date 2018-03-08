@@ -28,7 +28,7 @@ if (env.MBED_OS_REVISION == null) {
 if (env.MBED_OS_REVISION == '') {
   echo 'Using mbed OS revision from mbed-os.lib'
 } else {
-  echo "Using mbed OS revisiong ${env.MBED_OS_REVISION}"
+  echo "Using mbed OS revisioning ${env.MBED_OS_REVISION}"
   if (env.MBED_OS_REVISION.matches('pull/\\d+/head')) {
     echo "Revision is a Pull Request"
   }
@@ -44,7 +44,7 @@ def raas = [
 
 // List of targets with supported modem families
 def target_families = [
-  "UBLOX": ["UBLOX_C027"],
+  //"UBLOX": ["UBLOX_C027"],
   "DRAGONFLY": ["MTB_MTS_DRAGONFLY"]
 ]
 
@@ -56,10 +56,10 @@ def targets = [
 
 // Map toolchains to compilers
 def toolchains = [
-  ARM: "armcc",
-  GCC_ARM: "arm-none-eabi-gcc",
-  IAR: "iar_arm",
-  ARMC6: "arm6"
+  //ARM: "armcc",
+  GCC_ARM: "arm-none-eabi-gcc"
+  //IAR: "iar_arm",
+  //ARMC6: "arm6"
   ]
 
 // supported socket tests
@@ -95,7 +95,7 @@ for (int i = 0; i < target_families.size(); i++) {
 def parallelRunSmoke = [:]
 
 // Need to compare boolean against string value
-if ( params.smoke_test == true ) {
+if ( env.SMOKE_TEST == true ) {
   // Generate smoke tests based on suite amount
   for(int i = 0; i < raas.size(); i++) {
   	for(int j = 0; j < sockets.size(); j++) {
@@ -108,6 +108,8 @@ if ( params.smoke_test == true ) {
     	parallelRunSmoke[smokeStep] = run_smoke(target_families, raasPort, suite_to_run, toolchains, targets, socket)
     }
   }
+} else {
+  echo "Smoke test value: ${env.SMOKE_TEST}"
 }
 
 timestamps {
