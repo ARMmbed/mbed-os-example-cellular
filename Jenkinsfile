@@ -1,41 +1,60 @@
-properties ([[$class: 'ParametersDefinitionProperty', parameterDefinitions: [
-  [$class: 'StringParameterDefinition', name: 'mbed_os_revision', defaultValue: 'mbed-os-5.4', description: 'Revision of mbed-os to build'],
-  [$class: 'BooleanParameterDefinition', name: 'smoke_test', defaultValue: true, description: 'Runs HW smoke tests on Cellular devices']
-  ]]])
+properties
+([
+  [
+    $class: 'ParametersDefinitionProperty',
+    parameterDefinitions:
+    [
+      [
+        $class: 'StringParameterDefinition',
+        name: 'mbed_os_revision',
+        defaultValue: '',
+        description: 'Revision of mbed-os to build. To access mbed-os PR use format "pull/PR number/head"'
+      ],
+      [
+        $class: 'BooleanParameterDefinition',
+        name: 'smoke_test',
+        defaultValue: true,
+        description: 'Runs HW smoke tests on Cellular devices'
+      ]
+    ]
+  ]
+])
+
+if (params.mbed_os_revision == '') {
+  echo 'Using mbed OS revision from mbed-os.lib'
+} else {
+  echo "Using mbed OS revisiong ${params.mbed_os_revision}"
+  if (params.mbed_os_revision.matches('pull/\\d+/head')) {
+    echo "Revision is a Pull Request"
+  }
+}
 
 echo "Run smoke tests: ${params.smoke_test}"
 
-try {
-  echo "Verifying build with mbed-os version ${mbed_os_revision}"
-  env.MBED_OS_REVISION = "${mbed_os_revision}"
-} catch (err) {
-  def mbed_os_revision = "master"
-  echo "Verifying build with mbed-os version ${mbed_os_revision}"
-  env.MBED_OS_REVISION = "${mbed_os_revision}"
-}
-
 // Map RaaS instances to corresponding test suites
 def raas = [
-  "cellular_smoke_ublox_c027.json": "8072"
-  // Currently dragonfly is not supported by RAAS, skip it 
-  //"cellular_smoke_mts_dragonfly.json": "8072"
-  ]
+  "cellular_smoke_ublox_c027.json": "8072",
+  "cellular_smoke_mtb_mts_dragonfly.json": "8119"
+]
 
 // List of targets with supported modem families
 def target_families = [
-  "UBLOX": ["UBLOX_C027"]
-  ]
+  "UBLOX": ["UBLOX_C027"],
+  "DRAGONFLY": ["MTB_MTS_DRAGONFLY"]
+]
 
 // Supported Modems
 def targets = [
-  "UBLOX_C027"
+  "UBLOX_C027",
+  "MTB_MTS_DRAGONFLY"
 ]
 
 // Map toolchains to compilers
 def toolchains = [
   ARM: "armcc",
   GCC_ARM: "arm-none-eabi-gcc",
-  IAR: "iar_arm"
+  IAR: "iar_arm",
+  ARMC6: "arm6"
   ]
 
 // supported socket tests
@@ -110,9 +129,17 @@ def buildStep(target_family, target, compilerLabel, toolchain, socket) {
 
           // Set mbed-os to revision received as parameter
           execute ("mbed deploy --protocol ssh")
-          //dir ("mbed-os") {
-          //  execute ("git checkout ${env.MBED_OS_REVISION}")
-          //}
+          if (params.mbed_os_revision != '') {
+            dir("mbed-os") {
+              if (params.mbed_os_revision.matches('pull/\\d+/head')) {
+                // Use mbed-os PR and switch to branch created
+                execute("git fetch origin ${params.mbed_os_revision}:_PR_")
+                execute("git checkout _PR_")
+              } else {
+                execute ("git checkout ${params.mbed_os_revision}")
+              }
+            }
+          }
 
           execute ("mbed compile --build out/${target}_${toolchain}/ -m ${target} -t ${toolchain} -c --app-config ${config_file}")
         }
@@ -136,7 +163,7 @@ def run_smoke(target_families, raasPort, suite_to_run, toolchains, targets, sock
         deleteDir()
         dir("mbed-clitest") {
           git "git@github.com:ARMmbed/mbed-clitest.git"
-          execute("git checkout master")
+          execute("git checkout ${env.LATEST_CLITEST_STABLE_REL}")
           dir("mbed-clitest-suites") {
             git "git@github.com:ARMmbed/mbed-clitest-suites.git"
             execute("git submodule update --init --recursive")
@@ -149,23 +176,19 @@ def run_smoke(target_families, raasPort, suite_to_run, toolchains, targets, sock
           for (int i = 0; i < target_families.size(); i++) {
             for(int j = 0; j < toolchains.size(); j++) {
               for(int k = 0; k < targets.size(); k++) {
-            	 def target_family = target_families.keySet().asList().get(i)
-                 def allowed_target_type = target_families.get(target_family)
-                 def target = targets.get(k)
-                 def toolchain = toolchains.keySet().asList().get(j)
+                def target_family = target_families.keySet().asList().get(i)
+                def allowed_target_type = target_families.get(target_family)
+                def target = targets.get(k)
+                def toolchain = toolchains.keySet().asList().get(j)
 
-                 if(allowed_target_type.contains(target)) {
-                    unstash "${target}_${toolchain}_${socket}"
-                  }
-              	}
+                if(allowed_target_type.contains(target)) {
+                  unstash "${target}_${toolchain}_${socket}"
+                }
+              }
             }
           }     
-          if ("${suiteName}" == "cellular_smoke_mts_dragonfly")  {
-            execute("python clitest.py --suitedir mbed-clitest-suites/suites/ --suite ${suite_to_run} --type hardware --reset hard --raas 62.44.193.186:${raasPort} --tcdir mbed-clitest-suites/cellular  --failure_return_value -vvv -w --log log_${raasPort}_${suiteName}")
-          } else {
-            execute("python clitest.py --suitedir mbed-clitest-suites/suites/ --suite ${suite_to_run} --type hardware --reset --raas 62.44.193.186:${raasPort} --tcdir mbed-clitest-suites/cellular  --failure_return_value -vvv -w --log log_${raasPort}_${suiteName}")
-          }
-         archive "log_${raasPort}_${suiteName}/**/*"
+          execute("python clitest.py --suitedir mbed-clitest-suites/suites/ --suite ${suite_to_run} --type hardware --reset --raas 62.44.193.186:${raasPort} --tcdir mbed-clitest-suites/cellular  --failure_return_value -vvv -w --log log_${raasPort}_${suiteName}")
+          archive "log_${raasPort}_${suiteName}/**/*"
         }
       }
     }
