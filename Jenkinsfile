@@ -23,17 +23,18 @@ properties
 if (env.MBED_OS_REVISION == null) {
   echo 'First run with this branch, using default parameter values'
   env.MBED_OS_REVISION = ''
+  env.SMOKE_TEST = true
 }
 if (env.MBED_OS_REVISION == '') {
   echo 'Using mbed OS revision from mbed-os.lib'
 } else {
-  echo "Using mbed OS revisiong ${params.mbed_os_revision}"
+  echo "Using mbed OS revisiong ${env.MBED_OS_REVISION}"
   if (env.MBED_OS_REVISION.matches('pull/\\d+/head')) {
     echo "Revision is a Pull Request"
   }
 }
 
-echo "Run smoke tests: ${params.smoke_test}"
+echo "Run smoke tests: ${env.SMOKE_TEST}"
 
 // Map RaaS instances to corresponding test suites
 def raas = [
@@ -94,7 +95,7 @@ for (int i = 0; i < target_families.size(); i++) {
 def parallelRunSmoke = [:]
 
 // Need to compare boolean against string value
-if ( params.smoke_test == true ) {
+if ( env.SMOKE_TEST == true ) {
   // Generate smoke tests based on suite amount
   for(int i = 0; i < raas.size(); i++) {
   	for(int j = 0; j < sockets.size(); j++) {
@@ -137,10 +138,10 @@ def buildStep(target_family, target, compilerLabel, toolchain, socket) {
             dir("mbed-os") {
               if (env.MBED_OS_REVISION.matches('pull/\\d+/head')) {
                 // Use mbed-os PR and switch to branch created
-                execute("git fetch origin ${params.mbed_os_revision}:_PR_")
+                execute("git fetch origin ${env.MBED_OS_REVISION}:_PR_")
                 execute("git checkout _PR_")
               } else {
-                execute ("git checkout ${params.mbed_os_revision}")
+                execute ("git checkout ${env.MBED_OS_REVISION}")
               }
             }
           }
