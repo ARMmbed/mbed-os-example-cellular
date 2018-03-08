@@ -20,15 +20,15 @@ properties
   ]
 ])
 
-if (params.mbed_os_revision == null) {
+if (env.MBED_OS_REVISION == null) {
   echo 'First run with this branch, using default parameter values'
-  params.mbed_os_revision = ''
+  env.MBED_OS_REVISION = ''
 }
-if (params.mbed_os_revision == '') {
+if (env.MBED_OS_REVISION == '') {
   echo 'Using mbed OS revision from mbed-os.lib'
 } else {
   echo "Using mbed OS revisiong ${params.mbed_os_revision}"
-  if (params.mbed_os_revision.matches('pull/\\d+/head')) {
+  if (env.MBED_OS_REVISION.matches('pull/\\d+/head')) {
     echo "Revision is a Pull Request"
   }
 }
@@ -133,9 +133,9 @@ def buildStep(target_family, target, compilerLabel, toolchain, socket) {
 
           // Set mbed-os to revision received as parameter
           execute ("mbed deploy --protocol ssh")
-          if (params.mbed_os_revision != '') {
+          if (env.MBED_OS_REVISION != '') {
             dir("mbed-os") {
-              if (params.mbed_os_revision.matches('pull/\\d+/head')) {
+              if (env.MBED_OS_REVISION.matches('pull/\\d+/head')) {
                 // Use mbed-os PR and switch to branch created
                 execute("git fetch origin ${params.mbed_os_revision}:_PR_")
                 execute("git checkout _PR_")
