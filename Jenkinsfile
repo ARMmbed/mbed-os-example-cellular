@@ -20,6 +20,10 @@ properties
   ]
 ])
 
+if (params.mbed_os_revision == null) {
+  echo 'First run with this branch, using default parameter values'
+  params.mbed_os_revision == ''
+}
 if (params.mbed_os_revision == '') {
   echo 'Using mbed OS revision from mbed-os.lib'
 } else {
