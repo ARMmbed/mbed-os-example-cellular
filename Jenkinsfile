@@ -21,14 +21,14 @@ properties
 ])
 
 if (!env.MBED_OS_REVISION) {
-  echo 'First run with this branch, using default parameter values'
+  echo 'Running in branch, using default parameter values'
   env.MBED_OS_REVISION = ''
   env.SMOKE_TEST = true
 }
 if (env.MBED_OS_REVISION == '') {
   echo 'Using mbed OS revision from mbed-os.lib'
 } else {
-  echo "Using mbed OS revisioning ${env.MBED_OS_REVISION}"
+  echo "Using given mbed OS revision: ${env.MBED_OS_REVISION}"
   if (env.MBED_OS_REVISION.matches('pull/\\d+/head')) {
     echo "Revision is a Pull Request"
   }
@@ -38,28 +38,28 @@ echo "Run smoke tests: ${env.SMOKE_TEST}"
 
 // Map RaaS instances to corresponding test suites
 def raas = [
-  //"cellular_smoke_ublox_c027.json": "8072",
+  "cellular_smoke_ublox_c027.json": "8072",
   "cellular_smoke_mtb_mts_dragonfly.json": "8119"
 ]
 
 // List of targets with supported modem families
 def target_families = [
-  //"UBLOX": ["UBLOX_C027"],
+  "UBLOX": ["UBLOX_C027"],
   "DRAGONFLY": ["MTB_MTS_DRAGONFLY"]
 ]
 
 // Supported Modems
 def targets = [
-  //"UBLOX_C027",
+  "UBLOX_C027",
   "MTB_MTS_DRAGONFLY"
 ]
 
 // Map toolchains to compilers
 def toolchains = [
-  //ARM: "armcc",
-  GCC_ARM: "arm-none-eabi-gcc"
-  //IAR: "iar_arm",
-  //ARMC6: "arm6"
+  ARM: "armcc",
+  GCC_ARM: "arm-none-eabi-gcc",
+  IAR: "iar_arm",
+  ARMC6: "arm6"
   ]
 
 // supported socket tests
