@@ -93,16 +93,16 @@ Attach a serial console emulator of your choice (for example, PuTTY, Minicom or 
 You should see an output similar to this:
 
 ```
-mbed-os-example-cellular, Connecting...
-                                                                             
-                                                                            
-Connection Established.
-UDP: Sent 4 Bytes to echo.u-blox.com
-Received from echo server 4 Bytes
-                                                            
-                                                            
-Success. Exiting
+mbed-os-example-cellular
+Establishing connection ...... 
 
+Connection Established.
+TCP: connected with echo.mbedcloudtesting.com server
+TCP: Sent 4 Bytes to echo.mbedcloudtesting.com
+Received from echo server 4 Bytes
+
+
+Success. Exiting
 ```
 
 ## Troubleshooting

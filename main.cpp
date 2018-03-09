@@ -46,13 +46,13 @@
 OnboardCellularInterface iface;
 
 // Echo server hostname
-const char *host_name = "echo.u-blox.com";
+const char *host_name = "echo.mbedcloudtesting.com";
 
 // Echo server port (same for TCP and UDP)
 const int port = 7;
 
 Mutex PrintMutex;
-Thread dot_thread;
+Thread dot_thread(osPriorityNormal, 512);
 
 #define PRINT_TEXT_LENGTH 128
 char print_text[PRINT_TEXT_LENGTH];
