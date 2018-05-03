@@ -45,12 +45,12 @@ See the file `mbed_app.json` in the root directory of your application. This fil
             "help": "The password string to use for this APN, set to 0 if none",
             "value": 0
         }
-```  
+```
 
 ### Selecting socket type (TCP or UDP)
 
 
-You can choose which socket type the application should use; however, please note that TCP is a more reliable tranmission protocol. For example:
+You can choose which socket type the application should use; however, please note that TCP is a more reliable transmission protocol. For example:
 
 
 ```json
@@ -68,6 +68,25 @@ If you like details and wish to know about all the AT interactions between the m
             "help": "Turns AT command trace on/off from the cellular modem, defaults to off",
             "value": true
         },
+```
+
+### Turning on the tracing and trace level
+
+If you like to add more traces or follow the current ones you can turn traces on by changing `mbed-trace.enable` in mbed_app.json
+
+```"target_overrides": {
+        "*": {
+            "target.features_add": ["LWIP", "COMMON_PAL"],
+            "mbed-trace.enable": false,
+```
+
+Changing the trace level is done also in mbed_add.json by changing value in `trace-level`
+
+ ```"trace-level": {
+            "help": "Options are TRACE_LEVEL_ERROR,TRACE_LEVEL_WARN,TRACE_LEVEL_INFO,TRACE_LEVEL_DEBUG",
+            "macro_name": "MBED_TRACE_MAX_LEVEL",
+            "value": "TRACE_LEVEL_INFO"
+        }
 ```
 
 ### Board support
@@ -94,7 +113,7 @@ You should see an output similar to this:
 
 ```
 mbed-os-example-cellular
-Establishing connection ...... 
+Establishing connection ......
 
 Connection Established.
 TCP: connected with echo.mbedcloudtesting.com server
