@@ -80,7 +80,7 @@ If you like to add more traces or follow the current ones you can turn traces on
             "mbed-trace.enable": false,
 ```
 
-Changing the trace level is done also in mbed_add.json by changing value in `trace-level`
+After you have defined `mbed-trace.enable: true`, you can set trace levels by changing value in `trace-level`
 
  ```"trace-level": {
             "help": "Options are TRACE_LEVEL_ERROR,TRACE_LEVEL_WARN,TRACE_LEVEL_INFO,TRACE_LEVEL_DEBUG",
