@@ -18,6 +18,7 @@
 #include "common_functions.h"
 #include "UDPSocket.h"
 #include "OnboardCellularInterface.h"
+#include "CellularLog.h"
 
 #define UDP 0
 #define TCP 1
@@ -51,65 +52,93 @@ const char *host_name = "echo.mbedcloudtesting.com";
 // Echo server port (same for TCP and UDP)
 const int port = 7;
 
-Mutex PrintMutex;
+static rtos::Mutex trace_mutex;
+
+#if MBED_CONF_MBED_TRACE_ENABLE
+static void trace_wait()
+{
+    trace_mutex.lock();
+}
+
+static void trace_release()
+{
+    trace_mutex.unlock();
+}
+
+static char time_st[50];
+
+static char* trace_time(size_t ss)
+{
+    snprintf(time_st, 49, "[%08llums]", Kernel::get_ms_count());
+    return time_st;
+}
+
+static void trace_open()
+{
+    mbed_trace_init();
+    mbed_trace_prefix_function_set( &trace_time );
+
+    mbed_trace_mutex_wait_function_set(trace_wait);
+    mbed_trace_mutex_release_function_set(trace_release);
+}
+
+static void trace_close()
+{
+    mbed_trace_free();
+}
+#endif // #if MBED_CONF_MBED_TRACE_ENABLE
+
 Thread dot_thread(osPriorityNormal, 512);
 
-#define PRINT_TEXT_LENGTH 128
-char print_text[PRINT_TEXT_LENGTH];
-void print_function(const char *input_string)
+void print_function(const char *format, ...)
 {
-    PrintMutex.lock();
-    printf("%s", input_string);
-    fflush(NULL);
-    PrintMutex.unlock();
+    trace_mutex.lock();
+    va_list arglist;
+    va_start( arglist, format );
+    vprintf(format, arglist);
+    va_end( arglist );
+    trace_mutex.unlock();
 }
 
 void dot_event()
 {
-
     while (true) {
-        wait(4);
+        Thread::wait(4000);
         if (!iface.is_connected()) {
-            print_function(".");
+            trace_mutex.lock();
+            printf(".");
+            fflush(stdout);
+            trace_mutex.unlock();
         } else {
             break;
         }
     }
-
 }
-
 
 /**
  * Connects to the Cellular Network
  */
 nsapi_error_t do_connect()
 {
-    nsapi_error_t retcode;
+    nsapi_error_t retcode = NSAPI_ERROR_OK;
     uint8_t retry_counter = 0;
 
     while (!iface.is_connected()) {
-
         retcode = iface.connect();
         if (retcode == NSAPI_ERROR_AUTH_FAILURE) {
             print_function("\n\nAuthentication Failure. Exiting application\n");
-            return retcode;
-        } else if (retcode != NSAPI_ERROR_OK) {
-            snprintf(print_text, PRINT_TEXT_LENGTH, "\n\nCouldn't connect: %d, will retry\n", retcode);
-            print_function(print_text);
+        } else if (retcode == NSAPI_ERROR_OK) {
+            print_function("\n\nConnection Established.\n");
+        } else if (retry_counter > RETRY_COUNT) {
+            print_function("\n\nFatal connection failure: %d\n", retcode);
+        } else {
+            print_function("\n\nCouldn't connect: %d, will retry\n", retcode);
             retry_counter++;
             continue;
-        } else if (retcode != NSAPI_ERROR_OK && retry_counter > RETRY_COUNT) {
-            snprintf(print_text, PRINT_TEXT_LENGTH, "\n\nFatal connection failure: %d\n", retcode);
-            print_function(print_text);
-            return retcode;
         }
-
         break;
     }
-
-    print_function("\n\nConnection Established.\n");
-
-    return NSAPI_ERROR_OK;
+    return retcode;
 }
 
 /**
@@ -127,17 +156,14 @@ nsapi_error_t test_send_recv()
 
     retcode = sock.open(&iface);
     if (retcode != NSAPI_ERROR_OK) {
-        snprintf(print_text, PRINT_TEXT_LENGTH, "UDPSocket.open() fails, code: %d\n", retcode);
-        print_function(print_text);
+        print_function("UDPSocket.open() fails, code: %d\n", retcode);
         return -1;
     }
 
     SocketAddress sock_addr;
     retcode = iface.gethostbyname(host_name, &sock_addr);
     if (retcode != NSAPI_ERROR_OK) {
-        snprintf(print_text, PRINT_TEXT_LENGTH, "Couldn't resolve remote host: %s, code: %d\n", host_name,
-               retcode);
-        print_function(print_text);
+        print_function("Couldn't resolve remote host: %s, code: %d\n", host_name, retcode);
         return -1;
     }
 
@@ -150,21 +176,17 @@ nsapi_error_t test_send_recv()
 #if MBED_CONF_APP_SOCK_TYPE == TCP
     retcode = sock.connect(sock_addr);
     if (retcode < 0) {
-        snprintf(print_text, PRINT_TEXT_LENGTH, "TCPSocket.connect() fails, code: %d\n", retcode);
-        print_function(print_text);
+        print_function("TCPSocket.connect() fails, code: %d\n", retcode);
         return -1;
     } else {
-        snprintf(print_text, PRINT_TEXT_LENGTH, "TCP: connected with %s server\n", host_name);
-        print_function(print_text);
+        print_function("TCP: connected with %s server\n", host_name);
     }
     retcode = sock.send((void*) echo_string, sizeof(echo_string));
     if (retcode < 0) {
-        snprintf(print_text, PRINT_TEXT_LENGTH, "TCPSocket.send() fails, code: %d\n", retcode);
-        print_function(print_text);
+        print_function("TCPSocket.send() fails, code: %d\n", retcode);
         return -1;
     } else {
-        snprintf(print_text, PRINT_TEXT_LENGTH, "TCP: Sent %d Bytes to %s\n", retcode, host_name);
-        print_function(print_text);
+        print_function("TCP: Sent %d Bytes to %s\n", retcode, host_name);
     }
 
     n = sock.recv((void*) recv_buf, sizeof(recv_buf));
@@ -172,12 +194,10 @@ nsapi_error_t test_send_recv()
 
     retcode = sock.sendto(sock_addr, (void*) echo_string, sizeof(echo_string));
     if (retcode < 0) {
-        snprintf(print_text, PRINT_TEXT_LENGTH, "UDPSocket.sendto() fails, code: %d\n", retcode);
-        print_function(print_text);
+        print_function("UDPSocket.sendto() fails, code: %d\n", retcode);
         return -1;
     } else {
-        snprintf(print_text, PRINT_TEXT_LENGTH, "UDP: Sent %d Bytes to %s\n", retcode, host_name);
-        print_function(print_text);
+        print_function("UDP: Sent %d Bytes to %s\n", retcode, host_name);
     }
 
     n = sock.recvfrom(&sock_addr, (void*) recv_buf, sizeof(recv_buf));
@@ -186,8 +206,7 @@ nsapi_error_t test_send_recv()
     sock.close();
 
     if (n > 0) {
-        snprintf(print_text, PRINT_TEXT_LENGTH, "Received from echo server %d Bytes\n", n);
-        print_function(print_text);
+        print_function("Received from echo server %d Bytes\n", n);
         return 0;
     }
 
@@ -196,28 +215,38 @@ nsapi_error_t test_send_recv()
 
 int main()
 {
-
-    iface.modem_debug_on(MBED_CONF_APP_MODEM_TRACE);
+    print_function("\n\nmbed-os-example-cellular\n");
+    print_function("Establishing connection\n");
+#if MBED_CONF_MBED_TRACE_ENABLE
+    trace_open();
+#else
+    dot_thread.start(dot_event);
+#endif // #if MBED_CONF_MBED_TRACE_ENABLE
     /* Set Pin code for SIM card */
     iface.set_sim_pin(MBED_CONF_APP_SIM_PIN_CODE);
 
-    /* Set network credentials here, e.g., APN*/
+    /* Set network credentials here, e.g., APN */
     iface.set_credentials(MBED_CONF_APP_APN, MBED_CONF_APP_USERNAME, MBED_CONF_APP_PASSWORD);
 
-    print_function("\n\nmbed-os-example-cellular\n");
-    print_function("Establishing connection ");
-    dot_thread.start(dot_event);
+    /* Set the modem debug on/off */
+    iface.modem_debug_on(MBED_CONF_APP_MODEM_TRACE);
+
+    nsapi_error_t retcode = NSAPI_ERROR_NO_CONNECTION;
 
     /* Attempt to connect to a cellular network */
     if (do_connect() == NSAPI_ERROR_OK) {
-        nsapi_error_t retcode = test_send_recv();
-        if (retcode == NSAPI_ERROR_OK) {
-            print_function("\n\nSuccess. Exiting \n\n");
-            return 0;
-        }
+        retcode = test_send_recv();
     }
 
-    print_function("\n\nFailure. Exiting \n\n");
-    return -1;
+    if (retcode == NSAPI_ERROR_OK) {
+        print_function("\n\nSuccess. Exiting \n\n");
+    } else {
+        print_function("\n\nFailure. Exiting \n\n");
+    }
+#if MBED_CONF_MBED_TRACE_ENABLE
+    trace_close();
+#endif // #if MBED_CONF_MBED_TRACE_ENABLE
+
+    return 0;
 }
 // EOF
