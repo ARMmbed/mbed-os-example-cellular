@@ -67,13 +67,13 @@ if (params.smoke_test == true) {
   echo "Running smoke tests"
   // Generate smoke tests based on suite amount
   for(int i = 0; i < raas.size(); i++) {
-  	for(int j = 0; j < sockets.size(); j++) {
-    	def suite_to_run = raas.keySet().asList().get(i)
-    	def raasPort = raas.get(suite_to_run)
-    	def socket = sockets.get(j)
-    
-    	// Parallel execution needs unique step names. Remove .json file ending.
-    	def smokeStep = "${raasPort} ${suite_to_run.substring(0, suite_to_run.indexOf('.'))}"
+    for(int j = 0; j < sockets.size(); j++) {
+      def suite_to_run = raas.keySet().asList().get(i)
+      def raasPort = raas.get(suite_to_run)
+      def socket = sockets.get(j)
+
+      // Parallel execution needs unique step names. Remove .json file ending.
+      def smokeStep = "${raasPort} ${suite_to_run.substring(0, suite_to_run.indexOf('.'))}"
       parallelRunSmoke[smokeStep] = run_smoke(raasPort, suite_to_run, toolchains, targets, socket)
     }
   }
