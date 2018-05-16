@@ -96,7 +96,7 @@ def buildStep(target, compilerLabel, toolchain, socket) {
           def config_file = "mbed_app.json"
 
           if ("${target}" == "UBLOX_C030_U201") {
-            execute("sed -i '0,/\"value\": 0/s/\"value\": 0/\"value\": \"\\"JTM2M\\\"\"/' ${config_file}")
+            execute("sed -i 's/internet/JTM2M/' ${config_file}")
           }
 
           //change socket typembed_app.json
