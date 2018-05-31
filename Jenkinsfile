@@ -121,8 +121,14 @@ def buildStep(target, compilerLabel, toolchain) {
 
           execute ("mbed compile --build out/${target}_${toolchain}/ -m ${target} -t ${toolchain} -c --app-config ${config_file}")
         }
-        stash name: "${target}_${toolchain}", includes: '**/mbed-os-example-cellular.bin'
-        archive '**/mbed-os-example-cellular.bin'
+        if ("${target}" == "MTB_ADV_WISE_1570") {
+          stash name: "${target}_${toolchain}", includes: '**/mbed-os-example-cellular.hex'
+          archive '**/mbed-os-example-cellular.hex'
+        }
+        else {
+          stash name: "${target}_${toolchain}", includes: '**/mbed-os-example-cellular.bin'
+          archive '**/mbed-os-example-cellular.bin'
+        }
         step([$class: 'WsCleanup'])
       }
     }
