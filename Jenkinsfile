@@ -26,7 +26,9 @@ def raas = [
 def targets = [
   "UBLOX_C027",
   "MTB_MTS_DRAGONFLY",
-  "UBLOX_C030_U201"
+  "UBLOX_C030_U201",
+  "MTB_ADV_WISE_1570",
+  "K64F"
 ]
 
 // Map toolchains to compilers
@@ -83,10 +85,26 @@ def buildStep(target, compilerLabel, toolchain) {
           checkout scm
           def config_file = "mbed_app.json"
 
+          // Configurations for different targets
           if ("${target}" == "UBLOX_C030_U201") {
             execute("sed -i 's/internet/JTM2M/' ${config_file}")
           }
 
+          if ("${target}" == "UBLOX_C027") {
+            execute("sed -i 's/TCP/UDP/' ${config_file}")
+          }
+
+          if ("${target}" == "MTB_ADV_WISE_1570") {
+            execute("sed -i 's/TCP/UDP/' ${config_file}")
+            execute("sed -i 's/\"lwip.ppp-enabled\": true,/\"lwip.ppp-enabled\": false,/' ${config_file}")
+            execute("sed -i 's/\"platform.default-serial-baud-rate\": 115200,/\"platform.default-serial-baud-rate\": 9600,/' ${config_file}")
+          }
+
+          if ("${target}" == "K64F") {
+            execute("sed -i 's/TCP/UDP/' ${config_file}")
+            execute("sed -i 's/\"lwip.ppp-enabled\": true,/\"lwip.ppp-enabled\": false,/' ${config_file}")
+            execute("sed -i 's/\"target_overrides\": {/\"macros\": [\"CELLULAR_DEVICE=QUECTEL_BG96\", \"MDMRXD=PTC16\", \"MDMTXD=PTC17\"], \"target_overrides\": {/' ${config_file}")
+          }
           // Set mbed-os to revision received as parameter
           execute ("mbed deploy --protocol ssh")
           if (env.MBED_OS_REVISION != '') {
