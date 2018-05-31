@@ -18,7 +18,7 @@ if (env.MBED_OS_REVISION == '') {
 
 // Map RaaS instances to corresponding test suites
 def raas = [
-  "cellular_smoke_ublox_c027.json": "8072"
+  "cellular_smoke_ublox_c027.json": "levi"
   //"cellular_smoke_mtb_mts_dragonfly.json": "8119"
 ]
 
@@ -69,12 +69,12 @@ if (params.smoke_test == true) {
   for(int i = 0; i < raas.size(); i++) {
     for(int j = 0; j < sockets.size(); j++) {
       def suite_to_run = raas.keySet().asList().get(i)
-      def raasPort = raas.get(suite_to_run)
+      def raasName = raas.get(suite_to_run)
       def socket = sockets.get(j)
 
       // Parallel execution needs unique step names. Remove .json file ending.
-      def smokeStep = "${raasPort} ${suite_to_run.substring(0, suite_to_run.indexOf('.'))}"
-      parallelRunSmoke[smokeStep] = run_smoke(raasPort, suite_to_run, toolchains, targets, socket)
+      def smokeStep = "${raasName} ${suite_to_run.substring(0, suite_to_run.indexOf('.'))}"
+      parallelRunSmoke[smokeStep] = run_smoke(raasName, suite_to_run, toolchains, targets, socket)
     }
   }
 } else {
@@ -126,13 +126,13 @@ def buildStep(target, compilerLabel, toolchain, socket) {
   }
 }
 
-def run_smoke(raasPort, suite_to_run, toolchains, targets, socket) {
+def run_smoke(raasName, suite_to_run, toolchains, targets, socket) {
   return {
     env.RAAS_USERNAME = "user"
     env.RAAS_PASSWORD = "user"
     // Remove .json from suite name
     def suiteName = suite_to_run.substring(0, suite_to_run.indexOf('.'))
-    stage ("smoke_${raasPort}_${suiteName}") {
+    stage ("smoke_${raasName}_${suiteName}") {
       //node is actually the type of machine, i.e., mesh-test boild down to linux
       node ("linux") {
         deleteDir()
@@ -155,8 +155,10 @@ def run_smoke(raasPort, suite_to_run, toolchains, targets, socket) {
               unstash "${target}_${toolchain}_${socket}"
             }
           }     
-          execute("python clitest.py --suitedir mbed-clitest-suites/suites/ --suite ${suite_to_run} --type hardware --reset --raas 62.44.193.186:${raasPort} --tcdir mbed-clitest-suites/cellular  --failure_return_value -vvv -w --log log_${raasPort}_${suiteName}")
-          archive "log_${raasPort}_${suiteName}/**/*"
+          execute("python clitest.py --suitedir mbed-clitest-suites/suites/ --suite ${suite_to_run} --type hardware --reset \
+                  --raas ${raasName}.mbedcloudtesting.com:80 --tcdir mbed-clitest-suites/cellular --raas_queue --raas_queue_timeout 3600 \
+                  --raas_share_allocs --failure_return_value -vvv -w --log log_${raasName}_${suiteName}")
+          archive "log_${raasName}_${suiteName}/**/*"
         }
       }
     }
