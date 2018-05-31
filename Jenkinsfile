@@ -37,26 +37,17 @@ def toolchains = [
   ARMC6: "arm6"
   ]
 
-// supported socket tests
-def sockets = [
-  "udp",
-  "tcp"
-]
-
 def stepsForParallel = [:]
 
 // Jenkins pipeline does not support map.each, we need to use oldschool for loop
 for (int i = 0; i < targets.size(); i++) {
   for(int j = 0; j < toolchains.size(); j++) {
-    for(int k = 0; k < sockets.size(); k++) {
-      def target = targets.get(i)
-      def toolchain = toolchains.keySet().asList().get(j)
-      def compilerLabel = toolchains.get(toolchain)
-      def stepName = "${target} ${toolchain}"
-      def socket = sockets.get(k)
+    def target = targets.get(i)
+    def toolchain = toolchains.keySet().asList().get(j)
+    def compilerLabel = toolchains.get(toolchain)
+    def stepName = "${target} ${toolchain}"
 
-      stepsForParallel[stepName] = buildStep(target, compilerLabel, toolchain, socket)
-    }
+    stepsForParallel[stepName] = buildStep(target, compilerLabel, toolchain)
   }
 }
 
@@ -67,15 +58,12 @@ if (params.smoke_test == true) {
   echo "Running smoke tests"
   // Generate smoke tests based on suite amount
   for(int i = 0; i < raas.size(); i++) {
-    for(int j = 0; j < sockets.size(); j++) {
-      def suite_to_run = raas.keySet().asList().get(i)
-      def raasName = raas.get(suite_to_run)
-      def socket = sockets.get(j)
+    def suite_to_run = raas.keySet().asList().get(i)
+    def raasName = raas.get(suite_to_run)
 
-      // Parallel execution needs unique step names. Remove .json file ending.
-      def smokeStep = "${raasName} ${suite_to_run.substring(0, suite_to_run.indexOf('.'))}"
-      parallelRunSmoke[smokeStep] = run_smoke(raasName, suite_to_run, toolchains, targets, socket)
-    }
+    // Parallel execution needs unique step names. Remove .json file ending.
+    def smokeStep = "${raasName} ${suite_to_run.substring(0, suite_to_run.indexOf('.'))}"
+    parallelRunSmoke[smokeStep] = run_smoke(raasName, suite_to_run, toolchains, targets)
   }
 } else {
   echo "Skipping smoke tests"
@@ -86,7 +74,7 @@ timestamps {
   parallel parallelRunSmoke
 }
 
-def buildStep(target, compilerLabel, toolchain, socket) {
+def buildStep(target, compilerLabel, toolchain) {
   return {
     stage ("${target}_${compilerLabel}") {
       node ("${compilerLabel}") {
@@ -98,9 +86,6 @@ def buildStep(target, compilerLabel, toolchain, socket) {
           if ("${target}" == "UBLOX_C030_U201") {
             execute("sed -i 's/internet/JTM2M/' ${config_file}")
           }
-
-          //change socket typembed_app.json
-          execute("sed -i 's/\"sock-type\": .*/\"sock-type\": \"${socket}\",/' ${config_file}")
 
           // Set mbed-os to revision received as parameter
           execute ("mbed deploy --protocol ssh")
@@ -118,7 +103,7 @@ def buildStep(target, compilerLabel, toolchain, socket) {
 
           execute ("mbed compile --build out/${target}_${toolchain}/ -m ${target} -t ${toolchain} -c --app-config ${config_file}")
         }
-        stash name: "${target}_${toolchain}_${socket}", includes: '**/mbed-os-example-cellular.bin'
+        stash name: "${target}_${toolchain}", includes: '**/mbed-os-example-cellular.bin'
         archive '**/mbed-os-example-cellular.bin'
         step([$class: 'WsCleanup'])
       }
@@ -126,7 +111,7 @@ def buildStep(target, compilerLabel, toolchain, socket) {
   }
 }
 
-def run_smoke(raasName, suite_to_run, toolchains, targets, socket) {
+def run_smoke(raasName, suite_to_run, toolchains, targets) {
   return {
     env.RAAS_USERNAME = "user"
     env.RAAS_PASSWORD = "user"
@@ -152,7 +137,7 @@ def run_smoke(raasName, suite_to_run, toolchains, targets, socket) {
             for(int j = 0; j < toolchains.size(); j++) {
               def target = targets.get(i)
               def toolchain = toolchains.keySet().asList().get(j)
-              unstash "${target}_${toolchain}_${socket}"
+              unstash "${target}_${toolchain}"
             }
           }     
           execute("python clitest.py --suitedir mbed-clitest-suites/suites/ --suite ${suite_to_run} --type hardware --reset \
