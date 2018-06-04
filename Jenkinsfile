@@ -26,9 +26,9 @@ def raas = [
 def targets = [
   "UBLOX_C027",
   "MTB_MTS_DRAGONFLY",
-  "UBLOX_C030_U201",
-  "MTB_ADV_WISE_1570",
-  "K64F"
+  "UBLOX_C030_U201"
+  //"MTB_ADV_WISE_1570",
+  //"K64F"
 ]
 
 // Map toolchains to compilers
