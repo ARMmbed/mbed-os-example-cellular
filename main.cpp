@@ -80,10 +80,16 @@ static void trace_open()
 
     mbed_trace_mutex_wait_function_set(trace_wait);
     mbed_trace_mutex_release_function_set(trace_release);
+
+    mbed_cellular_trace::mutex_wait_function_set(trace_wait);
+    mbed_cellular_trace::mutex_release_function_set(trace_release);
 }
 
 static void trace_close()
 {
+    mbed_cellular_trace::mutex_wait_function_set(NULL);
+    mbed_cellular_trace::mutex_release_function_set(NULL);
+
     mbed_trace_free();
 }
 #endif // #if MBED_CONF_MBED_TRACE_ENABLE
@@ -227,9 +233,6 @@ int main()
 
     /* Set network credentials here, e.g., APN */
     iface.set_credentials(MBED_CONF_APP_APN, MBED_CONF_APP_USERNAME, MBED_CONF_APP_PASSWORD);
-
-    /* Set the modem debug on/off */
-    iface.modem_debug_on(MBED_CONF_APP_MODEM_TRACE);
 
     nsapi_error_t retcode = NSAPI_ERROR_NO_CONNECTION;
 
