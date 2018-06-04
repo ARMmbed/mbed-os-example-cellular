@@ -47,10 +47,10 @@
 OnboardCellularInterface iface;
 
 // Echo server hostname
-const char *host_name = "echo.mbedcloudtesting.com";
+const char *host_name = MBED_CONF_APP_ECHO_SERVER_HOSTNAME;
 
 // Echo server port (same for TCP and UDP)
-const int port = 7;
+const int port = MBED_CONF_APP_ECHO_SERVER_PORT;
 
 static rtos::Mutex trace_mutex;
 
