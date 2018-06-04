@@ -18,7 +18,7 @@ if (env.MBED_OS_REVISION == '') {
 
 // Map RaaS instances to corresponding test suites
 def raas = [
-  "cellular_smoke_ublox_c027.json": "8072"
+  "cellular_smoke_ublox_c027.json": "levi"
   //"cellular_smoke_mtb_mts_dragonfly.json": "8119"
 ]
 
@@ -26,7 +26,9 @@ def raas = [
 def targets = [
   "UBLOX_C027",
   "MTB_MTS_DRAGONFLY",
-  "UBLOX_C030_U201"
+  "UBLOX_C030_U201",
+  "MTB_ADV_WISE_1570",
+  "K64F"
 ]
 
 // Map toolchains to compilers
@@ -37,26 +39,17 @@ def toolchains = [
   ARMC6: "arm6"
   ]
 
-// supported socket tests
-def sockets = [
-  "udp",
-  "tcp"
-]
-
 def stepsForParallel = [:]
 
 // Jenkins pipeline does not support map.each, we need to use oldschool for loop
 for (int i = 0; i < targets.size(); i++) {
   for(int j = 0; j < toolchains.size(); j++) {
-    for(int k = 0; k < sockets.size(); k++) {
-      def target = targets.get(i)
-      def toolchain = toolchains.keySet().asList().get(j)
-      def compilerLabel = toolchains.get(toolchain)
-      def stepName = "${target} ${toolchain}"
-      def socket = sockets.get(k)
+    def target = targets.get(i)
+    def toolchain = toolchains.keySet().asList().get(j)
+    def compilerLabel = toolchains.get(toolchain)
+    def stepName = "${target} ${toolchain}"
 
-      stepsForParallel[stepName] = buildStep(target, compilerLabel, toolchain, socket)
-    }
+    stepsForParallel[stepName] = buildStep(target, compilerLabel, toolchain)
   }
 }
 
@@ -67,15 +60,12 @@ if (params.smoke_test == true) {
   echo "Running smoke tests"
   // Generate smoke tests based on suite amount
   for(int i = 0; i < raas.size(); i++) {
-    for(int j = 0; j < sockets.size(); j++) {
-      def suite_to_run = raas.keySet().asList().get(i)
-      def raasPort = raas.get(suite_to_run)
-      def socket = sockets.get(j)
+    def suite_to_run = raas.keySet().asList().get(i)
+    def raasName = raas.get(suite_to_run)
 
-      // Parallel execution needs unique step names. Remove .json file ending.
-      def smokeStep = "${raasPort} ${suite_to_run.substring(0, suite_to_run.indexOf('.'))}"
-      parallelRunSmoke[smokeStep] = run_smoke(raasPort, suite_to_run, toolchains, targets, socket)
-    }
+    // Parallel execution needs unique step names. Remove .json file ending.
+    def smokeStep = "${raasName} ${suite_to_run.substring(0, suite_to_run.indexOf('.'))}"
+    parallelRunSmoke[smokeStep] = run_smoke(raasName, suite_to_run, toolchains, targets)
   }
 } else {
   echo "Skipping smoke tests"
@@ -86,7 +76,7 @@ timestamps {
   parallel parallelRunSmoke
 }
 
-def buildStep(target, compilerLabel, toolchain, socket) {
+def buildStep(target, compilerLabel, toolchain) {
   return {
     stage ("${target}_${compilerLabel}") {
       node ("${compilerLabel}") {
@@ -95,13 +85,26 @@ def buildStep(target, compilerLabel, toolchain, socket) {
           checkout scm
           def config_file = "mbed_app.json"
 
+          // Configurations for different targets
           if ("${target}" == "UBLOX_C030_U201") {
             execute("sed -i 's/internet/JTM2M/' ${config_file}")
           }
 
-          //change socket typembed_app.json
-          execute("sed -i 's/\"sock-type\": .*/\"sock-type\": \"${socket}\",/' ${config_file}")
+          if ("${target}" == "UBLOX_C027") {
+            execute("sed -i 's/TCP/UDP/' ${config_file}")
+          }
 
+          if ("${target}" == "MTB_ADV_WISE_1570") {
+            execute("sed -i 's/TCP/UDP/' ${config_file}")
+            execute("sed -i 's/\"lwip.ppp-enabled\": true,/\"lwip.ppp-enabled\": false,/' ${config_file}")
+            execute("sed -i 's/\"platform.default-serial-baud-rate\": 115200,/\"platform.default-serial-baud-rate\": 9600,/' ${config_file}")
+          }
+
+          if ("${target}" == "K64F") {
+            execute("sed -i 's/TCP/UDP/' ${config_file}")
+            execute("sed -i 's/\"lwip.ppp-enabled\": true,/\"lwip.ppp-enabled\": false,/' ${config_file}")
+            execute("sed -i 's/\"target_overrides\": {/\"macros\": [\"CELLULAR_DEVICE=QUECTEL_BG96\", \"MDMRXD=PTC16\", \"MDMTXD=PTC17\"], \"target_overrides\": {/' ${config_file}")
+          }
           // Set mbed-os to revision received as parameter
           execute ("mbed deploy --protocol ssh")
           if (env.MBED_OS_REVISION != '') {
@@ -118,21 +121,27 @@ def buildStep(target, compilerLabel, toolchain, socket) {
 
           execute ("mbed compile --build out/${target}_${toolchain}/ -m ${target} -t ${toolchain} -c --app-config ${config_file}")
         }
-        stash name: "${target}_${toolchain}_${socket}", includes: '**/mbed-os-example-cellular.bin'
-        archive '**/mbed-os-example-cellular.bin'
+        if ("${target}" == "MTB_ADV_WISE_1570") {
+          stash name: "${target}_${toolchain}", includes: '**/mbed-os-example-cellular.hex'
+          archive '**/mbed-os-example-cellular.hex'
+        }
+        else {
+          stash name: "${target}_${toolchain}", includes: '**/mbed-os-example-cellular.bin'
+          archive '**/mbed-os-example-cellular.bin'
+        }
         step([$class: 'WsCleanup'])
       }
     }
   }
 }
 
-def run_smoke(raasPort, suite_to_run, toolchains, targets, socket) {
+def run_smoke(raasName, suite_to_run, toolchains, targets) {
   return {
     env.RAAS_USERNAME = "user"
     env.RAAS_PASSWORD = "user"
     // Remove .json from suite name
     def suiteName = suite_to_run.substring(0, suite_to_run.indexOf('.'))
-    stage ("smoke_${raasPort}_${suiteName}") {
+    stage ("smoke_${raasName}_${suiteName}") {
       //node is actually the type of machine, i.e., mesh-test boild down to linux
       node ("linux") {
         deleteDir()
@@ -152,11 +161,13 @@ def run_smoke(raasPort, suite_to_run, toolchains, targets, socket) {
             for(int j = 0; j < toolchains.size(); j++) {
               def target = targets.get(i)
               def toolchain = toolchains.keySet().asList().get(j)
-              unstash "${target}_${toolchain}_${socket}"
+              unstash "${target}_${toolchain}"
             }
           }     
-          execute("python clitest.py --suitedir mbed-clitest-suites/suites/ --suite ${suite_to_run} --type hardware --reset --raas 62.44.193.186:${raasPort} --tcdir mbed-clitest-suites/cellular  --failure_return_value -vvv -w --log log_${raasPort}_${suiteName}")
-          archive "log_${raasPort}_${suiteName}/**/*"
+          execute("python clitest.py --suitedir mbed-clitest-suites/suites/ --suite ${suite_to_run} --type hardware --reset \
+                  --raas ${raasName}.mbedcloudtesting.com:80 --tcdir mbed-clitest-suites/cellular --raas_queue --raas_queue_timeout 3600 \
+                  --raas_share_allocs --failure_return_value -vvv -w --log log_${raasName}_${suiteName}")
+          archive "log_${raasName}_${suiteName}/**/*"
         }
       }
     }
