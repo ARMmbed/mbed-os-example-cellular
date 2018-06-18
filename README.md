@@ -61,13 +61,10 @@ You can choose which socket type the application should use; however, please not
 
 ### Turning modem AT echo trace on
 
-If you like details and wish to know about all the AT interactions between the modem and your driver, turn on the modem AT echo trace. Set the `modem_trace` field value to be true.
+If you like details and wish to know about all the AT interactions between the modem and your driver, turn on the modem AT echo trace.
 
 ```json
-        "modem_trace": {
-            "help": "Turns AT command trace on/off from the cellular modem, defaults to off",
-            "value": true
-        },
+        "cellular.debug-at": true
 ```
 
 ### Turning on the tracing and trace level
@@ -76,8 +73,8 @@ If you like to add more traces or follow the current ones you can turn traces on
 
 ```"target_overrides": {
         "*": {
-            "target.features_add": ["LWIP", "COMMON_PAL"],
-            "mbed-trace.enable": false,
+            "target.features_add": ["LWIP"],
+            "mbed-trace.enable": true,
 ```
 
 After you have defined `mbed-trace.enable: true`, you can set trace levels by changing value in `trace-level`
@@ -126,4 +123,12 @@ Success. Exiting
 
 ## Troubleshooting
 
-If you have problems, you can review the [documentation](https://os.mbed.com/docs/latest/tutorials/debugging.html) for suggestions on what could be wrong and how to fix it.
+* Make sure the fields `sim-pin-code`, `apn`, `username` and `password` from the `mbed_app.json` file are filled in correctly. The correct values should appear in the user manual of the board if using eSIM or in the details of the SIM card if using normal SIM.
+* Enable trace flag to have access to debug information `"mbed-trace.enable": true`.
+* Try both `TCP` and `UDP` socket types.
+* Try both `"lwip.ppp-enabled": true` and `"lwip.ppp-enabled": false`.
+* The modem may support only a fixed baud-rate, such as `"platform.default-serial-baud-rate": 9600`.
+* The modem and network may only support IPv6 in which case `"lwip.ipv6-enabled": true` shall be defined.
+* The SIM and modem must have compatible cellular technology (3G, 4G, NB-IoT, ...) supported and cellular network available.
+
+If you have problems to get started with debugging, you can review the [documentation](https://os.mbed.com/docs/latest/tutorials/debugging.html) for suggestions on what could be wrong and how to fix it.

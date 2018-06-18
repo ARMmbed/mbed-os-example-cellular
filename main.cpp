@@ -17,7 +17,6 @@
 #include "mbed.h"
 #include "common_functions.h"
 #include "UDPSocket.h"
-#include "OnboardCellularInterface.h"
 #include "CellularLog.h"
 
 #define UDP 0
@@ -41,16 +40,13 @@
 // Number of retries /
 #define RETRY_COUNT 3
 
-
-
-// CellularInterface object
-OnboardCellularInterface iface;
+CellularBase *iface;
 
 // Echo server hostname
-const char *host_name = "echo.mbedcloudtesting.com";
+const char *host_name = MBED_CONF_APP_ECHO_SERVER_HOSTNAME;
 
 // Echo server port (same for TCP and UDP)
-const int port = 7;
+const int port = MBED_CONF_APP_ECHO_SERVER_PORT;
 
 static rtos::Mutex trace_mutex;
 
@@ -80,10 +76,16 @@ static void trace_open()
 
     mbed_trace_mutex_wait_function_set(trace_wait);
     mbed_trace_mutex_release_function_set(trace_release);
+
+    mbed_cellular_trace::mutex_wait_function_set(trace_wait);
+    mbed_cellular_trace::mutex_release_function_set(trace_release);
 }
 
 static void trace_close()
 {
+    mbed_cellular_trace::mutex_wait_function_set(NULL);
+    mbed_cellular_trace::mutex_release_function_set(NULL);
+
     mbed_trace_free();
 }
 #endif // #if MBED_CONF_MBED_TRACE_ENABLE
@@ -104,7 +106,7 @@ void dot_event()
 {
     while (true) {
         Thread::wait(4000);
-        if (!iface.is_connected()) {
+        if (!iface->is_connected()) {
             trace_mutex.lock();
             printf(".");
             fflush(stdout);
@@ -123,8 +125,8 @@ nsapi_error_t do_connect()
     nsapi_error_t retcode = NSAPI_ERROR_OK;
     uint8_t retry_counter = 0;
 
-    while (!iface.is_connected()) {
-        retcode = iface.connect();
+    while (!iface->is_connected()) {
+        retcode = iface->connect();
         if (retcode == NSAPI_ERROR_AUTH_FAILURE) {
             print_function("\n\nAuthentication Failure. Exiting application\n");
         } else if (retcode == NSAPI_ERROR_OK) {
@@ -154,14 +156,14 @@ nsapi_error_t test_send_recv()
     UDPSocket sock;
 #endif
 
-    retcode = sock.open(&iface);
+    retcode = sock.open(iface);
     if (retcode != NSAPI_ERROR_OK) {
         print_function("UDPSocket.open() fails, code: %d\n", retcode);
         return -1;
     }
 
     SocketAddress sock_addr;
-    retcode = iface.gethostbyname(host_name, &sock_addr);
+    retcode = iface->gethostbyname(host_name, &sock_addr);
     if (retcode != NSAPI_ERROR_OK) {
         print_function("Couldn't resolve remote host: %s, code: %d\n", host_name, retcode);
         return -1;
@@ -222,14 +224,14 @@ int main()
 #else
     dot_thread.start(dot_event);
 #endif // #if MBED_CONF_MBED_TRACE_ENABLE
+    iface = CellularBase::get_default_instance();
+    MBED_ASSERT(iface);
+
     /* Set Pin code for SIM card */
-    iface.set_sim_pin(MBED_CONF_APP_SIM_PIN_CODE);
+    iface->set_sim_pin(MBED_CONF_APP_SIM_PIN_CODE);
 
     /* Set network credentials here, e.g., APN */
-    iface.set_credentials(MBED_CONF_APP_APN, MBED_CONF_APP_USERNAME, MBED_CONF_APP_PASSWORD);
-
-    /* Set the modem debug on/off */
-    iface.modem_debug_on(MBED_CONF_APP_MODEM_TRACE);
+    iface->set_credentials(MBED_CONF_APP_APN, MBED_CONF_APP_USERNAME, MBED_CONF_APP_PASSWORD);
 
     nsapi_error_t retcode = NSAPI_ERROR_NO_CONNECTION;
 
