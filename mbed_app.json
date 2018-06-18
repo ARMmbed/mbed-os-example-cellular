@@ -1,10 +1,6 @@
 {
     "config": {
         "sock-type": "TCP",
-        "modem_trace": {
-            "help": "Turns AT command trace on/off from the cellular modem, defaults to off",
-            "value": false
-        },
         "sim-pin-code": {
             "help": "SIM PIN code",
             "value": "\"1234\""
@@ -21,6 +17,14 @@
             "help": "The password string to use for this APN, set to 0 if none",
             "value": 0
         },
+        "echo-server-hostname": {
+            "help": "Echo server host name.",
+            "value": "\"echo.mbedcloudtesting.com\""
+        },
+        "echo-server-port": {
+            "help": "Echo server port number.",
+            "value": 7
+        },
         "trace-level": {
             "help": "Options are TRACE_LEVEL_ERROR,TRACE_LEVEL_WARN,TRACE_LEVEL_INFO,TRACE_LEVEL_DEBUG",
             "macro_name": "MBED_TRACE_MAX_LEVEL",
@@ -29,7 +33,7 @@
   },
     "target_overrides": {
         "*": {
-            "target.features_add": ["LWIP", "COMMON_PAL"],
+            "target.features_add": ["LWIP"],
             "mbed-trace.enable": false,
             "lwip.ipv4-enabled": true,
             "lwip.ethernet-enabled": false,
@@ -38,7 +42,8 @@
             "platform.stdio-convert-newlines": true,
             "platform.stdio-baud-rate": 115200,
             "platform.default-serial-baud-rate": 115200,
-            "platform.stdio-buffered-serial": true
+            "platform.stdio-buffered-serial": true,
+            "cellular.debug-at": false
         }
     }
 }
