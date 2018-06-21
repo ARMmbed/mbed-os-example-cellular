@@ -106,13 +106,13 @@ void dot_event()
 {
     while (true) {
         Thread::wait(4000);
-        if (!iface->is_connected()) {
+        if (iface && iface->is_connected()) {
+            break;
+        } else {
             trace_mutex.lock();
             printf(".");
             fflush(stdout);
             trace_mutex.unlock();
-        } else {
-            break;
         }
     }
 }
