@@ -90,7 +90,11 @@ After you have defined `mbed-trace.enable: true`, you can set trace levels by ch
 
 The [generic cellular modem driver](https://github.com/ARMmbed/mbed-os/tree/master/features/netsocket/cellular/generic_modem_driver) this application uses was written using only a standard AT command set. It uses PPP with an Mbed-supported external IP stack. These abilities make the driver essentially generic, or nonvendor specific. However, this particular driver is for onboard-modem types. In other words, the modem exists on the Mbed Enabled target as opposed to plug-in modules (shields). For more details, please see our [Mbed OS cellular documentation](https://os.mbed.com/docs/latest/reference/cellular-api.html).
 
-Examples of Mbed Enabled boards with onboard modem chips include [u-blox C027](https://os.mbed.com/platforms/u-blox-C027/) and [MultiTech MTS Dragonfly](https://os.mbed.com/platforms/MTS-Dragonfly/).
+Currently supported boards with onboard modem chips are:
+
+[u-blox C027](https://os.mbed.com/platforms/u-blox-C027/)  
+[MultiTech MTS Dragonfly](https://os.mbed.com/platforms/MTS-Dragonfly/)
+
 
 ## Compiling the application
 
