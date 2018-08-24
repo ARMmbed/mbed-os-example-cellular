@@ -18,6 +18,7 @@
 #include "common_functions.h"
 #include "UDPSocket.h"
 #include "CellularLog.h"
+#include "OnboardCellularInterface.h"
 
 #define UDP 0
 #define TCP 1
@@ -215,6 +216,7 @@ nsapi_error_t test_send_recv()
     return -1;
 }
 
+
 int main()
 {
     print_function("\n\nmbed-os-example-cellular\n");
@@ -232,6 +234,9 @@ int main()
 
     /* Set network credentials here, e.g., APN */
     iface->set_credentials(MBED_CONF_APP_APN, MBED_CONF_APP_USERNAME, MBED_CONF_APP_PASSWORD);
+
+    /* start the dispatcher and use same queue */
+    iface->start_dispatch(&((CellularWrapper*)iface)->get_main_queue());
 
     nsapi_error_t retcode = NSAPI_ERROR_NO_CONNECTION;
 
