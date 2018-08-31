@@ -19,7 +19,7 @@ if (env.MBED_OS_REVISION == '') {
 // Map RaaS instances to corresponding test suites
 def raas = [
   "cellular_smoke_ublox_c027.json": "levi"
-  //"cellular_smoke_mtb_mts_dragonfly.json": "8119"
+  "cellular_smoke_mtb_mts_dragonfly.json": "irma"
 ]
 
 // Supported Modems
@@ -27,8 +27,8 @@ def targets = [
   "UBLOX_C027",
   "MTB_MTS_DRAGONFLY",
   "UBLOX_C030_U201"
-  //"MTB_ADV_WISE_1570",
-  //"K64F"
+  "MTB_ADV_WISE_1570",
+  "K64F"
 ]
 
 // Map toolchains to compilers
@@ -36,7 +36,7 @@ def toolchains = [
   ARM: "armcc",
   GCC_ARM: "arm-none-eabi-gcc",
   IAR: "iar_arm",
-  ARMC6: "arm6"
+  //ARMC6: "arm6"
   ]
 
 def stepsForParallel = [:]
