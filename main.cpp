@@ -90,7 +90,7 @@ static void trace_close()
 }
 #endif // #if MBED_CONF_MBED_TRACE_ENABLE
 
-Thread dot_thread(osPriorityNormal, 512);
+Thread dot_thread(osPriorityNormal, 512, NULL, "dot_thread");
 
 void print_function(const char *format, ...)
 {

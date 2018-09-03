@@ -1,5 +1,8 @@
 {
     "config": {
+        "main-stack-size": {
+            "value": 2048
+        },
         "sock-type": "TCP",
         "sim-pin-code": {
             "help": "SIM PIN code",
