@@ -30,7 +30,7 @@ See the file `mbed_app.json` in the root directory of your application. This fil
 
 ```json
         "sim-pin-code": {
-            "help": "SIM PIN code",
+            "help": "SIM PIN code, set to 0 if none",
             "value": "\"1234\""
         },
         "apn": {
