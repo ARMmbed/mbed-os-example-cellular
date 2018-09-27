@@ -158,7 +158,11 @@ nsapi_error_t test_send_recv()
 
     retcode = sock.open(iface);
     if (retcode != NSAPI_ERROR_OK) {
+#if MBED_CONF_APP_SOCK_TYPE == TCP
+        print_function("TCPSocket.open() fails, code: %d\n", retcode);
+#else
         print_function("UDPSocket.open() fails, code: %d\n", retcode);
+#endif
         return -1;
     }
 
