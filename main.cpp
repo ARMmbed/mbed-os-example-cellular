@@ -23,18 +23,18 @@
 #define TCP 1
 
 // SIM pin code goes here
-#ifndef MBED_CONF_APP_SIM_PIN_CODE
-# define MBED_CONF_APP_SIM_PIN_CODE    "1234"
+#ifndef MBED_CONF_NSAPI_DEFAULT_CELLULAR_SIM_PIN
+# define MBED_CONF_NSAPI_DEFAULT_CELLULAR_SIM_PIN   "1234"
 #endif
 
-#ifndef MBED_CONF_APP_APN
-# define MBED_CONF_APP_APN         "internet"
+#ifndef MBED_CONF_NSAPI_DEFAULT_CELLULAR_APN
+# define MBED_CONF_NSAPI_DEFAULT_CELLULAR_APN       "internet"
 #endif
-#ifndef MBED_CONF_APP_USERNAME
-# define MBED_CONF_APP_USERNAME    NULL
+#ifndef MBED_CONF_NSAPI_DEFAULT_CELLULAR_USERNAME
+# define MBED_CONF_NSAPI_DEFAULT_CELLULAR_USERNAME  NULL
 #endif
-#ifndef MBED_CONF_APP_PASSWORD
-# define MBED_CONF_APP_PASSWORD    NULL
+#ifndef MBED_CONF_NSAPI_DEFAULT_CELLULAR_PASSWORD
+# define MBED_CONF_NSAPI_DEFAULT_CELLULAR_PASSWORD  NULL
 #endif
 
 // Number of retries /
@@ -232,10 +232,12 @@ int main()
     MBED_ASSERT(iface);
 
     /* Set Pin code for SIM card */
-    iface->set_sim_pin(MBED_CONF_APP_SIM_PIN_CODE);
+    iface->set_sim_pin(MBED_CONF_NSAPI_DEFAULT_CELLULAR_SIM_PIN);
 
     /* Set network credentials here, e.g., APN */
-    iface->set_credentials(MBED_CONF_APP_APN, MBED_CONF_APP_USERNAME, MBED_CONF_APP_PASSWORD);
+    iface->set_credentials(MBED_CONF_NSAPI_DEFAULT_CELLULAR_APN,
+                           MBED_CONF_NSAPI_DEFAULT_CELLULAR_USERNAME,
+                           MBED_CONF_NSAPI_DEFAULT_CELLULAR_PASSWORD);
 
     nsapi_error_t retcode = NSAPI_ERROR_NO_CONNECTION;
 

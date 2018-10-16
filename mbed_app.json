@@ -1,21 +1,8 @@
 {
     "config": {
-        "sock-type": "TCP",
-        "sim-pin-code": {
-            "help": "SIM PIN code, set to 0 if none",
-            "value": "\"1234\""
-        },
-        "apn": {
-            "help": "The APN string to use for this SIM/network, set to 0 if none",
-            "value": "\"internet\""
-        },
-        "username": {
-            "help": "The user name string to use for this APN, set to zero if none",
-            "value": 0
-        },
-        "password": {
-            "help": "The password string to use for this APN, set to 0 if none",
-            "value": 0
+        "sock-type": {
+            "help": "Socket type for user data: UDP or TCP",
+            "value": "UDP"
         },
         "echo-server-hostname": {
             "help": "Echo server host name.",
@@ -33,17 +20,21 @@
   },
     "target_overrides": {
         "*": {
+            "nsapi.default-cellular-sim-pin": "\"1234\"",
+            "nsapi.default-cellular-apn": "\"internet\"",
+            "nsapi.default-cellular-username": 0,
+            "nsapi.default-cellular-password": 0,
+            "cellular.debug-at": false,
+            "platform.default-serial-baud-rate": 115200,
+            "platform.stdio-buffered-serial": true,
             "target.features_add": ["LWIP"],
-            "mbed-trace.enable": false,
             "lwip.ipv4-enabled": true,
             "lwip.ethernet-enabled": false,
             "lwip.ppp-enabled": true,
             "lwip.tcp-enabled": true,
+            "mbed-trace.enable": false,
             "platform.stdio-convert-newlines": true,
-            "platform.stdio-baud-rate": 115200,
-            "platform.default-serial-baud-rate": 115200,
-            "platform.stdio-buffered-serial": true,
-            "cellular.debug-at": false
+            "platform.stdio-baud-rate": 115200
         }
     }
 }
