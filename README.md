@@ -26,25 +26,13 @@ $ cd mbed-os-example-cellular
 
 ### Change the network and SIM credentials
 
-See the file `mbed_app.json` in the root directory of your application. This file contains all the user specific configurations your application needs. Provide the pin code for your SIM card, as well as any APN settings if needed. For example:
+See the file `mbed_app.json` in the root directory of your application. This file contains all the user specific configurations your application needs. Provide the pin code for your SIM card, as well as any APN settings if needed. You can set value to 0 if setting is not needed. For example:
 
 ```json
-        "sim-pin-code": {
-            "help": "SIM PIN code, set to 0 if none",
-            "value": "\"1234\""
-        },
-        "apn": {
-            "help": "The APN string to use for this SIM/network, set to 0 if none",
-            "value": "\"internet\""
-        },
-        "username": {
-            "help": "The user name string to use for this APN, set to zero if none",
-            "value": 0
-        },
-        "password": {
-            "help": "The password string to use for this APN, set to 0 if none",
-            "value": 0
-        }
+        "nsapi.default-cellular-sim-pin": "\"1234\"",
+        "nsapi.default-cellular-apn": "\"internet\"",
+        "nsapi.default-cellular-username": 0,
+        "nsapi.default-cellular-password": 0,
 ```
 
 ### Selecting socket type (TCP or UDP)
@@ -54,9 +42,7 @@ You can choose which socket type the application should use; however, please not
 
 
 ```json
-
-     "sock-type": "TCP",
-
+        "sock-type": "TCP",
 ```
 
 ### Turning modem AT echo trace on
