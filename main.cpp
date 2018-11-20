@@ -105,7 +105,7 @@ void print_function(const char *format, ...)
 void dot_event()
 {
     while (true) {
-        Thread::wait(4000);
+        ThisThread::sleep_for(4000);
         if (iface && iface->is_connected()) {
             break;
         } else {
@@ -244,13 +244,20 @@ int main()
         retcode = test_send_recv();
     }
 
+    if (iface->disconnect() != NSAPI_ERROR_OK) {
+        print_function("\n\n disconnect failed.\n\n");
+    }
+
     if (retcode == NSAPI_ERROR_OK) {
         print_function("\n\nSuccess. Exiting \n\n");
     } else {
         print_function("\n\nFailure. Exiting \n\n");
     }
+
 #if MBED_CONF_MBED_TRACE_ENABLE
     trace_close();
+#else
+    dot_thread.terminate();
 #endif // #if MBED_CONF_MBED_TRACE_ENABLE
 
     return 0;

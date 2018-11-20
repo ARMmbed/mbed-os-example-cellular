@@ -33,7 +33,6 @@
   },
     "target_overrides": {
         "*": {
-            "target.features_add": ["LWIP"],
             "mbed-trace.enable": false,
             "lwip.ipv4-enabled": true,
             "lwip.ethernet-enabled": false,
