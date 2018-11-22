@@ -22,21 +22,6 @@
 #define UDP 0
 #define TCP 1
 
-// SIM pin code goes here
-#ifndef MBED_CONF_APP_SIM_PIN_CODE
-# define MBED_CONF_APP_SIM_PIN_CODE    "1234"
-#endif
-
-#ifndef MBED_CONF_APP_APN
-# define MBED_CONF_APP_APN         "internet"
-#endif
-#ifndef MBED_CONF_APP_USERNAME
-# define MBED_CONF_APP_USERNAME    NULL
-#endif
-#ifndef MBED_CONF_APP_PASSWORD
-# define MBED_CONF_APP_PASSWORD    NULL
-#endif
-
 // Number of retries /
 #define RETRY_COUNT 3
 
@@ -228,14 +213,10 @@ int main()
 #else
     dot_thread.start(dot_event);
 #endif // #if MBED_CONF_MBED_TRACE_ENABLE
+
+    // sim pin, apn, credentials and possible plmn are taken atuomtically from json when using get_default_instance()
     iface = CellularBase::get_default_instance();
     MBED_ASSERT(iface);
-
-    /* Set Pin code for SIM card */
-    iface->set_sim_pin(MBED_CONF_APP_SIM_PIN_CODE);
-
-    /* Set network credentials here, e.g., APN */
-    iface->set_credentials(MBED_CONF_APP_APN, MBED_CONF_APP_USERNAME, MBED_CONF_APP_PASSWORD);
 
     nsapi_error_t retcode = NSAPI_ERROR_NO_CONNECTION;
 

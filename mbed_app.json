@@ -1,22 +1,6 @@
 {
     "config": {
         "sock-type": "TCP",
-        "sim-pin-code": {
-            "help": "SIM PIN code, set to 0 if none",
-            "value": "\"1234\""
-        },
-        "apn": {
-            "help": "The APN string to use for this SIM/network, set to 0 if none",
-            "value": "\"internet\""
-        },
-        "username": {
-            "help": "The user name string to use for this APN, set to zero if none",
-            "value": 0
-        },
-        "password": {
-            "help": "The password string to use for this APN, set to 0 if none",
-            "value": 0
-        },
         "echo-server-hostname": {
             "help": "Echo server host name.",
             "value": "\"echo.mbedcloudtesting.com\""
@@ -42,7 +26,12 @@
             "platform.stdio-baud-rate": 115200,
             "platform.default-serial-baud-rate": 115200,
             "platform.stdio-buffered-serial": true,
-            "cellular.debug-at": false
+            "cellular.debug-at": false,
+            "nsapi.default-cellular-plmn": 0,
+            "nsapi.default-cellular-sim-pin": "\"1234\"",
+            "nsapi.default-cellular-apn": 0,
+            "nsapi.default-cellular-username": 0,
+            "nsapi.default-cellular-password": 0
         }
     }
 }
