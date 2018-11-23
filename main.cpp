@@ -25,7 +25,7 @@
 // Number of retries /
 #define RETRY_COUNT 3
 
-CellularBase *iface;
+NetworkInterface *iface;
 
 // Echo server hostname
 const char *host_name = MBED_CONF_APP_ECHO_SERVER_HOSTNAME;
@@ -91,7 +91,7 @@ void dot_event()
 {
     while (true) {
         ThisThread::sleep_for(4000);
-        if (iface && iface->is_connected()) {
+        if (iface && iface->get_connection_status() == NSAPI_STATUS_GLOBAL_UP) {
             break;
         } else {
             trace_mutex.lock();
@@ -110,7 +110,7 @@ nsapi_error_t do_connect()
     nsapi_error_t retcode = NSAPI_ERROR_OK;
     uint8_t retry_counter = 0;
 
-    while (!iface->is_connected()) {
+    while (iface->get_connection_status() != NSAPI_STATUS_GLOBAL_UP) {
         retcode = iface->connect();
         if (retcode == NSAPI_ERROR_AUTH_FAILURE) {
             print_function("\n\nAuthentication Failure. Exiting application\n");
@@ -215,7 +215,7 @@ int main()
 #endif // #if MBED_CONF_MBED_TRACE_ENABLE
 
     // sim pin, apn, credentials and possible plmn are taken atuomtically from json when using get_default_instance()
-    iface = CellularBase::get_default_instance();
+    iface = NetworkInterface::get_default_instance();
     MBED_ASSERT(iface);
 
     nsapi_error_t retcode = NSAPI_ERROR_NO_CONNECTION;

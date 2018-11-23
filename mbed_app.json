@@ -17,6 +17,7 @@
   },
     "target_overrides": {
         "*": {
+            "target.network-default-interface-type": "CELLULAR",
             "mbed-trace.enable": false,
             "lwip.ipv4-enabled": true,
             "lwip.ethernet-enabled": false,
