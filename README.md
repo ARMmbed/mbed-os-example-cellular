@@ -73,7 +73,6 @@ If you like to add more traces or follow the current ones you can turn traces on
 
 ```"target_overrides": {
         "*": {
-            "target.features_add": ["LWIP"],
             "mbed-trace.enable": true,
 ```
 
@@ -97,6 +96,19 @@ Currently supported boards with onboard modem chips are:
 
 
 ## Compiling the application
+
+The master branch is for daily development and it uses the latest mbed-os/master.
+
+To use the latest stable version update to a Mbed OS release tag, for example:
+
+```
+mbed releases
+ * mbed-os-5.10.4
+   ...
+mbed update mbed-os-5.10.4
+```
+
+You may need to use `--clean` option to discard your local changes (use with caution).
 
 Use Mbed CLI commands to generate a binary for the application. For example, in the case of GCC, use the following command:
 
