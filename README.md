@@ -86,9 +86,9 @@ Currently supported boards with onboard modem chips are:
 
 ## Compiling the application
 
-The master branch is for daily development and it uses the latest mbed-os/master.
+The master branch is for daily development and it uses the latest mbed-os/master release.
 
-To use the latest stable version update to a Mbed OS release tag, for example:
+To use older versions update Mbed OS release tag, for example:
 
 ```
 mbed releases
