@@ -18,7 +18,7 @@ if (env.MBED_OS_REVISION == '') {
 
 // Map RaaS instances to corresponding test suites
 def raas = [
-  "cellular_smoke_ublox_c027.json": "levi"
+  "cellular_smoke_ublox_c027.json": "ruka"
   //"cellular_smoke_mtb_mts_dragonfly.json": "8119"
 ]
 
