@@ -12,13 +12,14 @@
         "trace-level": {
             "help": "Options are TRACE_LEVEL_ERROR,TRACE_LEVEL_WARN,TRACE_LEVEL_INFO,TRACE_LEVEL_DEBUG",
             "macro_name": "MBED_TRACE_MAX_LEVEL",
-            "value": "TRACE_LEVEL_INFO"
+            "value": "TRACE_LEVEL_DEBUG"
         }
   },
+  "macros": ["CELLULAR_DEVICE=SAMSUNG_S5JS100_PPP_RIL", "MDMRXD=PTC16", "MDMTXD=PTC17","MDMRTS=NC", "MDMCTS=NC"], 
     "target_overrides": {
         "*": {
             "target.network-default-interface-type": "CELLULAR",
-            "mbed-trace.enable": false,
+            "mbed-trace.enable": true,
             "lwip.ipv4-enabled": true,
             "lwip.ethernet-enabled": false,
             "lwip.ppp-enabled": true,

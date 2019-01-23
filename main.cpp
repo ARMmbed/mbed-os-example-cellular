@@ -54,9 +54,18 @@ static char* trace_time(size_t ss)
     return time_st;
 }
 
+#include "Serial.h"
+static Serial serial(USBTX, USBRX, MBED_CONF_PLATFORM_DEFAULT_SERIAL_BAUD_RATE);
+
+void trace_printer(const char* str)
+{
+    serial.printf("%s\r\n", str);
+}
+
 static void trace_open()
 {
     mbed_trace_init();
+    mbed_trace_print_function_set( trace_printer );
     mbed_trace_prefix_function_set( &trace_time );
 
     mbed_trace_mutex_wait_function_set(trace_wait);
@@ -77,15 +86,15 @@ static void trace_close()
 
 Thread dot_thread(osPriorityNormal, 512);
 
-void print_function(const char *format, ...)
-{
-    trace_mutex.lock();
-    va_list arglist;
-    va_start( arglist, format );
-    vprintf(format, arglist);
-    va_end( arglist );
-    trace_mutex.unlock();
-}
+//void print_function(const char *format, ...)
+//{
+//    trace_mutex.lock();
+//    va_list arglist;
+//    va_start( arglist, format );
+//    vprintf(format, arglist);
+//    va_end( arglist );
+//    trace_mutex.unlock();
+//}
 
 void dot_event()
 {
@@ -113,13 +122,13 @@ nsapi_error_t do_connect()
     while (iface->get_connection_status() != NSAPI_STATUS_GLOBAL_UP) {
         retcode = iface->connect();
         if (retcode == NSAPI_ERROR_AUTH_FAILURE) {
-            print_function("\n\nAuthentication Failure. Exiting application\n");
+            tr_info("\n\nAuthentication Failure. Exiting application\n");
         } else if (retcode == NSAPI_ERROR_OK) {
-            print_function("\n\nConnection Established.\n");
+            tr_info("\n\nConnection Established.\n");
         } else if (retry_counter > RETRY_COUNT) {
-            print_function("\n\nFatal connection failure: %d\n", retcode);
+            tr_info("\n\nFatal connection failure: %d\n", retcode);
         } else {
-            print_function("\n\nCouldn't connect: %d, will retry\n", retcode);
+            tr_info("\n\nCouldn't connect: %d, will retry\n", retcode);
             retry_counter++;
             continue;
         }
@@ -144,9 +153,9 @@ nsapi_error_t test_send_recv()
     retcode = sock.open(iface);
     if (retcode != NSAPI_ERROR_OK) {
 #if MBED_CONF_APP_SOCK_TYPE == TCP
-        print_function("TCPSocket.open() fails, code: %d\n", retcode);
+        tr_info("TCPSocket.open() fails, code: %d\n", retcode);
 #else
-        print_function("UDPSocket.open() fails, code: %d\n", retcode);
+        tr_info("UDPSocket.open() fails, code: %d\n", retcode);
 #endif
         return -1;
     }
@@ -154,7 +163,7 @@ nsapi_error_t test_send_recv()
     SocketAddress sock_addr;
     retcode = iface->gethostbyname(host_name, &sock_addr);
     if (retcode != NSAPI_ERROR_OK) {
-        print_function("Couldn't resolve remote host: %s, code: %d\n", host_name, retcode);
+        tr_info("Couldn't resolve remote host: %s, code: %d\n", host_name, retcode);
         return -1;
     }
 
@@ -167,17 +176,17 @@ nsapi_error_t test_send_recv()
 #if MBED_CONF_APP_SOCK_TYPE == TCP
     retcode = sock.connect(sock_addr);
     if (retcode < 0) {
-        print_function("TCPSocket.connect() fails, code: %d\n", retcode);
+        tr_info("TCPSocket.connect() fails, code: %d\n", retcode);
         return -1;
     } else {
-        print_function("TCP: connected with %s server\n", host_name);
+        tr_info("TCP: connected with %s server\n", host_name);
     }
     retcode = sock.send((void*) echo_string, sizeof(echo_string));
     if (retcode < 0) {
-        print_function("TCPSocket.send() fails, code: %d\n", retcode);
+        tr_info("TCPSocket.send() fails, code: %d\n", retcode);
         return -1;
     } else {
-        print_function("TCP: Sent %d Bytes to %s\n", retcode, host_name);
+        tr_info("TCP: Sent %d Bytes to %s\n", retcode, host_name);
     }
 
     n = sock.recv((void*) recv_buf, sizeof(recv_buf));
@@ -185,10 +194,10 @@ nsapi_error_t test_send_recv()
 
     retcode = sock.sendto(sock_addr, (void*) echo_string, sizeof(echo_string));
     if (retcode < 0) {
-        print_function("UDPSocket.sendto() fails, code: %d\n", retcode);
+        tr_info("UDPSocket.sendto() fails, code: %d\n", retcode);
         return -1;
     } else {
-        print_function("UDP: Sent %d Bytes to %s\n", retcode, host_name);
+        tr_info("UDP: Sent %d Bytes to %s\n", retcode, host_name);
     }
 
     n = sock.recvfrom(&sock_addr, (void*) recv_buf, sizeof(recv_buf));
@@ -197,7 +206,7 @@ nsapi_error_t test_send_recv()
     sock.close();
 
     if (n > 0) {
-        print_function("Received from echo server %d Bytes\n", n);
+        tr_info("Received from echo server %d Bytes\n", n);
         return 0;
     }
 
@@ -206,13 +215,14 @@ nsapi_error_t test_send_recv()
 
 int main()
 {
-    print_function("\n\nmbed-os-example-cellular\n");
-    print_function("Establishing connection\n");
 #if MBED_CONF_MBED_TRACE_ENABLE
     trace_open();
 #else
     dot_thread.start(dot_event);
 #endif // #if MBED_CONF_MBED_TRACE_ENABLE
+
+    tr_info("\n\nmbed-os-example-cellular\n");
+    tr_info("Establishing connection\n");
 
     // sim pin, apn, credentials and possible plmn are taken atuomtically from json when using get_default_instance()
     iface = NetworkInterface::get_default_instance();
@@ -226,13 +236,13 @@ int main()
     }
 
     if (iface->disconnect() != NSAPI_ERROR_OK) {
-        print_function("\n\n disconnect failed.\n\n");
+        tr_info("\n\n disconnect failed.\n\n");
     }
 
     if (retcode == NSAPI_ERROR_OK) {
-        print_function("\n\nSuccess. Exiting \n\n");
+        tr_info("\n\nSuccess. Exiting \n\n");
     } else {
-        print_function("\n\nFailure. Exiting \n\n");
+        tr_info("\n\nFailure. Exiting \n\n");
     }
 
 #if MBED_CONF_MBED_TRACE_ENABLE
