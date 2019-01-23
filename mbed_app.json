@@ -30,8 +30,8 @@
             "platform.stdio-buffered-serial": true,
             "cellular.debug-at": false,
             "nsapi.default-cellular-plmn": 0,
-            "nsapi.default-cellular-sim-pin": "\"1234\"",
-            "nsapi.default-cellular-apn": 0,
+            "nsapi.default-cellular-sim-pin": 0,
+            "nsapi.default-cellular-apn": "\"iot\"",
             "nsapi.default-cellular-username": 0,
             "nsapi.default-cellular-password": 0
         }
