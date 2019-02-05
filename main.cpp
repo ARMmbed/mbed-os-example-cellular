@@ -19,7 +19,8 @@
 #include "UDPSocket.h"
 #include "CellularLog.h"
 #include "CellularContext.h"
-#include "CellularPower.h"
+#include "CellularNetwork.h"
+#include "CellularInformation.h"
 
 #define UDP 0
 #define TCP 1
@@ -227,16 +228,32 @@ int main()
         retcode = test_send_recv();
     }
 
+    CellularContext *ctx = (CellularContext *)iface;
+    CellularDevice *dev = ctx->get_device();
+    CellularNetwork* nw = dev->open_network();
+    int rssi = -1, ber = -1;
+    retcode = nw->get_signal_quality(rssi, &ber);
+    tr_info("[MAIN] get_signal_quality, err: %d, rssi: %d, ber: %d", retcode, rssi, ber);
+
+    char buf[50];
+    CellularInformation *info = dev->open_information();
+    retcode = info->get_serial_number(buf, 50, CellularInformation::IMEI);
+    tr_info("[MAIN] err: %d, IMEI: %s", retcode, buf);
+
+    retcode = info->get_serial_number(buf, 50, CellularInformation::IMEISV);
+    tr_info("[MAIN] err: %d, IMEISV: %s", retcode, buf);
+
+    retcode = info->get_imsi(buf, 50);
+    tr_info("[MAIN] err: %d, imsi: %s", retcode, buf);
+
     if (iface->disconnect() != NSAPI_ERROR_OK) {
         print_function("\n\n disconnect failed.\n\n");
     }
 
     ////// START TEST PSMP    /////////
-    wait(5);
-    CellularContext *ctx = (CellularContext *)iface;
-    CellularPower *pwr = ctx->get_device()->open_power();
-    retcode = pwr->opt_power_save_mode(40, 4);
-    while(1);
+    /*
+    retcode = dev->set_power_save_mode(40, 4);
+    while(1);*/
     ////// END TEST PSMP    /////////
     if (retcode == NSAPI_ERROR_OK) {
         print_function("\n\nSuccess. Exiting \n\n");
