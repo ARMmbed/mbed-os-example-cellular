@@ -2,6 +2,8 @@
 
 This is an example based on `mbed-os` cellular APIs that demonstrates a TCP or UDP echo transaction with a public echo server.
 
+(Note: To see this example in a rendered form you can import into the Arm Mbed Online Compiler, please see [the documentation](https://os.mbed.com/docs/mbed-os/latest/apis/cellular-api.html#cellular-example-connection-establishment).)
+
 ## Getting started
 
 This particular cellular application uses a cellular network and network-socket APIs that are part of [`mbed-os`](https://github.com/ARMmbed/mbed-os).
@@ -10,7 +12,7 @@ The program uses a [cellular modem driver](https://github.com/ARMmbed/mbed-os/tr
 
 After registration, the driver opens a point-to-point protocol (PPP) pipe using LWIP with the cellular modem and connects to internet. This driver currently supports UART data connection type only between your cellular modem and MCU.
 
-For more information on Arm Mbed OS cellular APIs and porting guide, please visit the [Mbed OS cellular API](https://os.mbed.com/docs/latest/reference/cellular.html) and [contributing documentation](https://os.mbed.com/docs/latest/reference/contributing.html).
+For more information on Arm Mbed OS cellular APIs and porting guide, please visit the [Mbed OS cellular API](https://os.mbed.com/docs/latest/reference/cellular.html) and [contributing documentation](https://os.mbed.com/docs/mbed-os/latest/contributing/index.html).
 
 ### Download the application
 
@@ -76,7 +78,7 @@ After you have defined `mbed-trace.enable: true`, you can set trace levels by ch
 
 ### Board support
 
-The [cellular modem driver](https://github.com/ARMmbed/mbed-os/tree/master/features/cellular/framework/API) in this example uses PPP with an Mbed-supported external IP stack. It supports targets when modem exists on the Mbed Enabled target as opposed to plug-in modules (shields). For more details, please see our [Mbed OS cellular documentation](https://os.mbed.com/docs/latest/reference/cellular-api.html).
+The [cellular modem driver](https://github.com/ARMmbed/mbed-os/tree/master/features/cellular/framework/API) in this example uses PPP with an Mbed-supported external IP stack. It supports targets when modem exists on the Mbed Enabled target as opposed to plug-in modules (shields). For more details, please see our [Mbed OS cellular documentation](https://os.mbed.com/docs/mbed-os/latest/apis/cellular-api.html).
 
 Currently supported boards with onboard modem chips are:
 
