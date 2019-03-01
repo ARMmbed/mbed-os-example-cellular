@@ -38,7 +38,7 @@ See the file `mbed_app.json` in the root directory of your application. This fil
         "nsapi.default-cellular-password": 0
 ```
 
-### Selecting socket type (TCP or UDP)
+### Selecting socket type (TCP, UDP or NONIP)
 
 
 You can choose which socket type the application should use; however, please note that TCP is a more reliable transmission protocol. For example:
@@ -137,5 +137,6 @@ Success. Exiting
 * The modem may support only a fixed baud-rate, such as `"platform.default-serial-baud-rate": 9600`.
 * The modem and network may only support IPv6 in which case `"lwip.ipv6-enabled": true` shall be defined.
 * The SIM and modem must have compatible cellular technology (3G, 4G, NB-IoT, ...) supported and cellular network available.
+* Enable CIoT optimization for NONIP socket `control-plane-opt: true`.
 
 If you have problems to get started with debugging, you can review the [documentation](https://os.mbed.com/docs/latest/tutorials/debugging.html) for suggestions on what could be wrong and how to fix it.
