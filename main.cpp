@@ -200,25 +200,16 @@ nsapi_error_t test_send_recv()
     sock.close();
 
     if (n > 0) {
-        print_function("Received from echo server %d Bytes\n", n);
+        print_function("Received from echo server %d Bytes: %s\n", n, recv_buf);
         return 0;
     }
 
     return -1;
 }
 
-int main()
+void run_example(NetworkInterface* interface)
 {
-    print_function("\n\nmbed-os-example-cellular\n");
-    print_function("Establishing connection\n");
-#if MBED_CONF_MBED_TRACE_ENABLE
-    trace_open();
-#else
-    dot_thread.start(dot_event);
-#endif // #if MBED_CONF_MBED_TRACE_ENABLE
-
-    // sim pin, apn, credentials and possible plmn are taken atuomtically from json when using get_default_instance()
-    iface = NetworkInterface::get_default_instance();
+    iface = interface;
     MBED_ASSERT(iface);
 
     nsapi_error_t retcode = NSAPI_ERROR_NO_CONNECTION;
@@ -226,6 +217,10 @@ int main()
     /* Attempt to connect to a cellular network */
     if (do_connect() == NSAPI_ERROR_OK) {
         retcode = test_send_recv();
+    }
+
+    if (iface->disconnect() != NSAPI_ERROR_OK) {
+        print_function("\n\n disconnect failed.\n\n");
     }
 
     CellularContext *ctx = (CellularContext *)iface;
@@ -237,6 +232,9 @@ int main()
 
     char buf[50];
     CellularInformation *info = dev->open_information();
+    retcode = info->get_serial_number(buf, 50, CellularInformation::SN);
+    tr_info("[MAIN] err: %d, SN: %s", retcode, buf);
+
     retcode = info->get_serial_number(buf, 50, CellularInformation::IMEI);
     tr_info("[MAIN] err: %d, IMEI: %s", retcode, buf);
 
@@ -246,9 +244,9 @@ int main()
     retcode = info->get_imsi(buf, 50);
     tr_info("[MAIN] err: %d, imsi: %s", retcode, buf);
 
-    if (iface->disconnect() != NSAPI_ERROR_OK) {
-        print_function("\n\n disconnect failed.\n\n");
-    }
+    retcode = info->get_iccid(buf, 50);
+    tr_info("[MAIN] err: %d, iccid: %s", retcode, buf);
+
 
     ////// START TEST PSMP    /////////
     /*
@@ -260,6 +258,34 @@ int main()
     } else {
         print_function("\n\nFailure. Exiting \n\n");
     }
+}
+
+#include "RDA_8955_PPP.h"
+
+int main()
+{
+#if MBED_CONF_MBED_TRACE_ENABLE
+    trace_open();
+#else
+    dot_thread.start(dot_event);
+#endif // #if MBED_CONF_MBED_TRACE_ENABLE
+
+    print_function("\n\nmbed-os-example-cellular\n");
+
+    // First with default interface
+    print_function("\nEstablishing connection with default interface (nb-iot)...\n\n");
+    run_example(NetworkInterface::get_default_instance());
+
+#if MBED_CONF_APP_TEST_RDA8955
+    // Then with secondary interface
+    print_function("\nEstablishing connection with secondary interface (GPRS)...\n\n");
+    UARTSerial serial(MBED_CONF_RDA_8955_PPP_TX, MBED_CONF_RDA_8955_PPP_RX, MBED_CONF_RDA_8955_PPP_BAUDRATE);
+    RDA_8955_PPP device(&serial);
+    CellularContext *context = device.create_context(NULL, NULL, MBED_CONF_CELLULAR_CONTROL_PLANE_OPT);
+    MBED_ASSERT(context);
+    context->set_default_parameters();
+    run_example(context);
+#endif
 
 #if MBED_CONF_MBED_TRACE_ENABLE
     trace_close();

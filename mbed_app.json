@@ -13,6 +13,10 @@
             "help": "Options are TRACE_LEVEL_ERROR,TRACE_LEVEL_WARN,TRACE_LEVEL_INFO,TRACE_LEVEL_DEBUG",
             "macro_name": "MBED_TRACE_MAX_LEVEL",
             "value": "TRACE_LEVEL_DEBUG"
+        },
+        "test-rda8955": {
+            "help": "Run example also with secondary (RDA8955) interface. This requires RDA8955 HW to be attached to UART1",
+            "value": false
         }
   },
     "target_overrides": {
@@ -21,18 +25,26 @@
             "mbed-trace.enable": true,
             "lwip.ipv4-enabled": true,
             "lwip.ethernet-enabled": false,
-            "lwip.ppp-enabled": false,
+            "lwip.ppp-enabled": true,
             "lwip.tcp-enabled": true,
+            "lwip.l3ip-enabled": true,
             "platform.stdio-convert-newlines": true,
             "platform.stdio-baud-rate": 115200,
             "platform.default-serial-baud-rate": 115200,
             "platform.stdio-buffered-serial": true,
-            "cellular.debug-at": false,
+            "cellular.debug-at": true,
             "nsapi.default-cellular-plmn": 0,
             "nsapi.default-cellular-sim-pin": 0,
             "nsapi.default-cellular-apn": "\"iot\"",
             "nsapi.default-cellular-username": 0,
             "nsapi.default-cellular-password": 0
+        },
+        "S5JS100": {
+            "RDA_8955_PPP.tx": "UART_TX1",
+            "RDA_8955_PPP.rx": "UART_RX1",
+            "RDA_8955_PPP.provide-default": false,
+            "lwip.tcpip-thread-stacksize": 2048,
+            "lwip.ppp-thread-stacksize": 2048
         }
     }
 }
