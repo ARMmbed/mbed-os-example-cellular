@@ -209,7 +209,7 @@ int main()
     print_function("\n\nmbed-os-example-cellular\n");
     print_function("\n\nBuilt: %s, %s\n", __DATE__, __TIME__);
 #ifdef MBED_CONF_NSAPI_DEFAULT_CELLULAR_PLMN
-    print_function("\n\n[MAIN], plmn: %s\n", MBED_CONF_NSAPI_DEFAULT_CELLULAR_PLMN);
+    print_function("\n\n[MAIN], plmn: %s\n", (MBED_CONF_NSAPI_DEFAULT_CELLULAR_PLMN ? MBED_CONF_NSAPI_DEFAULT_CELLULAR_PLMN : "NULL"));
 #endif
 
     print_function("Establishing connection\n");
