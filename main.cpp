@@ -135,7 +135,7 @@ nsapi_error_t do_connect()
  * Opens a UDP or a TCP socket with the given echo server and performs an echo
  * transaction retrieving current.
  */
-nsapi_error_t test_send_recv()
+nsapi_error_t test_send_recv(CellularContext *ctx)
 {
     nsapi_size_or_error_t retcode;
 #if MBED_CONF_APP_SOCK_TYPE == TCP
@@ -144,7 +144,10 @@ nsapi_error_t test_send_recv()
     UDPSocket sock;
 #endif
 
-    retcode = sock.open(iface);
+    retcode = sock.open(ctx);
+    // FOR MULTIHOMING we need to set sockopt to bind it to correct interface
+    tr_debug("Settings socket options to interface %s", ctx->get_interface_name());
+    retcode = sock.setsockopt(NSAPI_SOCKET, NSAPI_BIND_TO_DEVICE, ctx->get_interface_name(), strlen(ctx->get_interface_name()));
     if (retcode != NSAPI_ERROR_OK) {
 #if MBED_CONF_APP_SOCK_TYPE == TCP
         print_function("TCPSocket.open() fails, code: %d\n", retcode);
@@ -155,14 +158,16 @@ nsapi_error_t test_send_recv()
     }
 
     SocketAddress sock_addr;
-    retcode = iface->gethostbyname(host_name, &sock_addr);
+    //retcode = ctx->gethostbyname(host_name, &sock_addr); // or next line could be tested also. Both work but do we need to later for multihoming?
+    retcode = ctx->gethostbyname(host_name, &sock_addr, NSAPI_UNSPEC, ctx->get_interface_name());
     if (retcode != NSAPI_ERROR_OK) {
         print_function("Couldn't resolve remote host: %s, code: %d\n", host_name, retcode);
         return -1;
+    } else {
+        tr_debug("sockaddr.ip: %s", sock_addr.get_ip_address());
     }
 
     sock_addr.set_port(port);
-
     sock.set_timeout(15000);
     int n = 0;
     const char *echo_string = "TEST";
@@ -207,32 +212,39 @@ nsapi_error_t test_send_recv()
     return -1;
 }
 
-int main()
+#define BLOCKING_MODE 1
+static int async_flag = 0;
+
+void cellular_callback(nsapi_event_t ev, intptr_t ptr)
 {
-    print_function("\n\nmbed-os-example-cellular\n");
-    print_function("Establishing connection\n");
-#if MBED_CONF_MBED_TRACE_ENABLE
-    trace_open();
-#else
-    dot_thread.start(dot_event);
-#endif // #if MBED_CONF_MBED_TRACE_ENABLE
-
-    // sim pin, apn, credentials and possible plmn are taken atuomtically from json when using get_default_instance()
-    iface = NetworkInterface::get_default_instance();
-    MBED_ASSERT(iface);
-
-    nsapi_error_t retcode = NSAPI_ERROR_NO_CONNECTION;
-
-    /* Attempt to connect to a cellular network */
-    if (do_connect() == NSAPI_ERROR_OK) {
-        retcode = test_send_recv();
+    if (ev >= NSAPI_EVENT_CELLULAR_STATUS_BASE && ev <= NSAPI_EVENT_CELLULAR_STATUS_END) {
+        cell_callback_data_t *data = (cell_callback_data_t *)ptr;
+        cellular_connection_status_t st = (cellular_connection_status_t)ev;
+        tr_error("[MAIN], Cellular event: %d, final try: %d", ev, data->final_try);
+        if (st == CellularRILATResponse) {
+            tr_error("[MAIN AT RESPONSE: %s, len: %d", (char*)data->data, data->status_data);
+        }
+    } else {
+        tr_error("[MAIN], General event: %d", ev);
     }
 
+    if (ev == NSAPI_EVENT_CONNECTION_STATUS_CHANGE && ptr == NSAPI_STATUS_GLOBAL_UP) {
+        async_flag = 1;
+        tr_error("[MAIN], cellular_callback, GLOBAL UP, async_flag: %d", async_flag);
+    }
+    if (ev == NSAPI_EVENT_CONNECTION_STATUS_CHANGE && ptr == NSAPI_STATUS_DISCONNECTED) {
+        tr_error("[MAIN], cellular_callback, DISCONNECTED");
+    }
+}
+
+void print_stuff()
+{
     CellularContext *ctx = (CellularContext *)iface;
     CellularDevice *dev = ctx->get_device();
     CellularNetwork* nw = dev->open_network();
+
     int rssi = -1, ber = -1;
-    retcode = nw->get_signal_quality(rssi, &ber);
+    int retcode = nw->get_signal_quality(rssi, &ber);
     tr_info("[MAIN] get_signal_quality, err: %d, rssi: %d, ber: %d", retcode, rssi, ber);
 
     char buf[50];
@@ -246,27 +258,80 @@ int main()
     retcode = info->get_imsi(buf, 50);
     tr_info("[MAIN] err: %d, imsi: %s", retcode, buf);
 
-    if (iface->disconnect() != NSAPI_ERROR_OK) {
-        print_function("\n\n disconnect failed.\n\n");
-    }
+    CellularNetwork::NWRegisteringMode mode = CellularNetwork::NWModeDeRegister;
+    retcode = nw->get_network_registering_mode(mode);
+    tr_info("[MAIN] err: %d, nwmode: %d", retcode, mode);
 
-    ////// START TEST PSMP    /////////
-    /*
-    retcode = dev->set_power_save_mode(40, 4);
-    while(1);*/
-    ////// END TEST PSMP    /////////
-    if (retcode == NSAPI_ERROR_OK) {
-        print_function("\n\nSuccess. Exiting \n\n");
-    } else {
-        print_function("\n\nFailure. Exiting \n\n");
-    }
+    retcode = nw->set_receive_period(1, CellularNetwork::EDRXEUTRAN_NB_S1_mode, 0x06);
+    tr_info("[MAIN] set_receive_period: %d", retcode);
 
+    //retcode = dev->set_power_save_mode(40, 4);
+    //tr_info("[MAIN] set_power_save_mode: %d", retcode);
+
+    retcode = info->get_iccid(buf, 50);
+    tr_info("[MAIN] get_iccid: %d, iccid: %s", retcode, buf);
+
+    //retcode = dev->send_at_command("AT\r\n", 4);
+}
+
+#include "SAMSUNG_S5JS100_RIL.h"
+#include "mbed_config.h"
+
+nsapi_error_t test_data(CellularDevice *device, CellularContext *ctx, const char *plmn)
+{
+    device->reset_stm();
+    device->set_plmn(plmn);
+    return ctx->connect();
+}
+
+int main()
+{
+    print_function("\n\nmbed-os-example-cellular\n");
+    print_function("Establishing connection\n");
 #if MBED_CONF_MBED_TRACE_ENABLE
-    trace_close();
+    trace_open();
 #else
-    dot_thread.terminate();
+    dot_thread.start(dot_event);
 #endif // #if MBED_CONF_MBED_TRACE_ENABLE
 
+
+    SAMSUNG_S5JS100_RIL *s1 = new SAMSUNG_S5JS100_RIL();
+    CellularContext *ctx1 = s1->create_context(NULL, MBED_CONF_NSAPI_DEFAULT_CELLULAR_APN, false);
+    // !!! CHANGE APN TO DIFFERENT
+    CellularContext *ctx2 = s1->create_context(NULL, MBED_CONF_NSAPI_DEFAULT_CELLULAR_APN, false);
+
+    nsapi_error_t err = test_data(s1, ctx1,  MBED_CONF_NSAPI_DEFAULT_CELLULAR_PLMN);
+    if (err) {
+        tr_error("Connect1 failed with: %d", err);
+        err = ctx1->disconnect();
+        tr_debug("disconnect 1: %d", err);
+    }
+    if (err == 0) {
+        // !!! CHANGE PLMN TO DIFFERENT IF NEEDED
+        err = test_data(s1, ctx2, MBED_CONF_NSAPI_DEFAULT_CELLULAR_PLMN);
+        if (err) {
+            tr_error("Connect2 failed with: %d", err);
+        }
+    }
+
+    if (err == 0) {
+        err = test_send_recv(ctx1);
+        tr_debug("test and send 1: %d", err);
+        err = test_send_recv(ctx2);
+        tr_debug("test and send 2: %d", err);
+    }
+
+    err = ctx1->disconnect();
+    tr_debug("disconnect 1: %d", err);
+    err = ctx2->disconnect();
+    tr_debug("disconnect 2: %d" ,err);
+    delete s1;
+    wait(2);
+    tr_info("MAIN OUT");
+#if MBED_CONF_MBED_TRACE_ENABLE
+    trace_close();
+#endif // #if MBED_CONF_MBED_TRACE_ENABLE
     return 0;
+
 }
 // EOF
