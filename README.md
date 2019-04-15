@@ -139,3 +139,10 @@ Success. Exiting
 * The SIM and modem must have compatible cellular technology (3G, 4G, NB-IoT, ...) supported and cellular network available.
 
 If you have problems to get started with debugging, you can review the [documentation](https://os.mbed.com/docs/latest/tutorials/debugging.html) for suggestions on what could be wrong and how to fix it.
+
+### License and contributions
+
+The software is provided under Apache-2.0 license. Contributions to this project are accepted under the same license. Please see [contributing.md](CONTRIBUTING.md) for more info.
+
+This project contains code from other projects. The original license text is included in those source files. They must comply with our license guide.
+
