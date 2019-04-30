@@ -165,7 +165,7 @@ def run_smoke(raasName, suite_to_run, toolchains, targets) {
             }
           }     
           execute("python clitest.py --suitedir mbed-clitest-suites/suites/ --suite ${suite_to_run} --type hardware --reset \
-                  --raas ${raasName}.mbedcloudtesting.com:80 --tcdir mbed-clitest-suites/cellular --raas_queue --raas_queue_timeout 3600 \
+                  --raas https://${raasName}.mbedcloudtesting.com:443 --tcdir mbed-clitest-suites/cellular --raas_queue --raas_queue_timeout 3600 \
                   --raas_share_allocs --failure_return_value -vvv -w --log log_${raasName}_${suiteName}")
           archive "log_${raasName}_${suiteName}/**/*"
         }
