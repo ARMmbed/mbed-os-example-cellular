@@ -18,6 +18,9 @@
 #include "common_functions.h"
 #include "UDPSocket.h"
 #include "CellularLog.h"
+#include "CellularContext.h"
+#include "CellularDevice.h"
+#include "CellularInformation.h"
 
 #define UDP 0
 #define TCP 1
@@ -121,6 +124,8 @@ nsapi_error_t do_connect()
         } else {
             print_function("\n\nCouldn't connect: %d, will retry\n", retcode);
             retry_counter++;
+            wait(3);
+            print_function("\n\niface->get_connection_status(): %d\n", iface->get_connection_status());
             continue;
         }
         break;
@@ -204,6 +209,58 @@ nsapi_error_t test_send_recv()
     return -1;
 }
 
+#include "CellularCommon.h"
+#define BLOCKING_MODE 1
+static int async_flag = 0;
+
+void cellular_callback(nsapi_event_t ev, intptr_t ptr)
+{
+    if (ev >= NSAPI_EVENT_CELLULAR_STATUS_BASE && ev <= NSAPI_EVENT_CELLULAR_STATUS_END) {
+        cell_callback_data_t *data = (cell_callback_data_t *)ptr;
+        cellular_connection_status_t st = (cellular_connection_status_t)ev;
+        tr_error("[MAIN], Cellular event: %d, final try: %d", ev, data->final_try);
+    } else {
+        tr_error("[MAIN], General event: %d", ev);
+    }
+
+    if (ev == NSAPI_EVENT_CONNECTION_STATUS_CHANGE && ptr == NSAPI_STATUS_GLOBAL_UP) {
+        async_flag = 1;
+        tr_error("[MAIN], cellular_callback, GLOBAL UP, async_flag: %d", async_flag);
+    }
+    if (ev == NSAPI_EVENT_CONNECTION_STATUS_CHANGE && ptr == NSAPI_STATUS_DISCONNECTED) {
+        tr_error("[MAIN], cellular_callback, DISCONNECTED");
+    }
+}
+
+void print_stuff()
+{
+    CellularContext *ctx = (CellularContext *)iface;
+    CellularDevice *dev = ctx->get_device();
+    CellularNetwork* nw = dev->open_network();
+
+    int rssi = -1, ber = -1;
+    int retcode = nw->get_signal_quality(rssi, &ber);
+    tr_info("[MAIN] get_signal_quality, err: %d, rssi: %d, ber: %d", retcode, rssi, ber);
+
+    char buf[50];
+    CellularInformation *info = dev->open_information();
+    retcode = info->get_serial_number(buf, 50, CellularInformation::IMEI);
+    tr_info("[MAIN] err: %d, IMEI: %s", retcode, buf);
+
+    retcode = info->get_serial_number(buf, 50, CellularInformation::IMEISV);
+    tr_info("[MAIN] err: %d, IMEISV: %s", retcode, buf);
+
+    retcode = info->get_imsi(buf, 50);
+    tr_info("[MAIN] err: %d, imsi: %s", retcode, buf);
+
+    CellularNetwork::NWRegisteringMode mode = CellularNetwork::NWModeDeRegister;
+    retcode = nw->get_network_registering_mode(mode);
+    tr_info("[MAIN] err: %d, nwmode: %d", retcode, mode);
+
+    retcode = info->get_iccid(buf, 50);
+    tr_info("[MAIN] get_iccid: %d, iccid: %s", retcode, buf);
+}
+#include "QUECTEL_BG96.h"
 int main()
 {
     print_function("\n\nmbed-os-example-cellular\n");
@@ -214,26 +271,108 @@ int main()
     dot_thread.start(dot_event);
 #endif // #if MBED_CONF_MBED_TRACE_ENABLE
 
-    // sim pin, apn, credentials and possible plmn are taken atuomtically from json when using get_default_instance()
+
+
+    // sim pin, apn, credentials and possible plmn are taken automatically from json when using get_default_instance()
     iface = NetworkInterface::get_default_instance();
+/*
+    UARTSerial *serial = new UARTSerial(MBED_CONF_QUECTEL_BG96_TX, MBED_CONF_QUECTEL_BG96_RX, MBED_CONF_QUECTEL_BG96_BAUDRATE);
+    #if defined (MBED_CONF_QUECTEL_BG96_RTS) && defined(MBED_CONF_QUECTEL_BG96_CTS)
+        tr_debug("QUECTEL_BG96 flow control: RTS %d CTS %d", MBED_CONF_QUECTEL_BG96_RTS, MBED_CONF_QUECTEL_BG96_CTS);
+        serial.set_flow_control(SerialBase::RTSCTS, MBED_CONF_QUECTEL_BG96_RTS, MBED_CONF_QUECTEL_BG96_CTS);
+    #endif
+    QUECTEL_BG96 *bg96 = new QUECTEL_BG96(serial);
+    CellularContext *ctx = bg96->create_context(NULL, NULL, false);
+    iface = (NetworkInterface *)ctx;
     MBED_ASSERT(iface);
 
+#ifdef MBED_CONF_NSAPI_DEFAULT_CELLULAR_APN
+#ifndef MBED_CONF_NSAPI_DEFAULT_CELLULAR_USERNAME
+#define MBED_CONF_NSAPI_DEFAULT_CELLULAR_USERNAME NULL
+#endif
+#ifndef MBED_CONF_NSAPI_DEFAULT_CELLULAR_PASSWORD
+#define MBED_CONF_NSAPI_DEFAULT_CELLULAR_PASSWORD NULL
+#endif
+#endif
+#ifdef MBED_CONF_NSAPI_DEFAULT_CELLULAR_SIM_PIN
+    ctx->set_sim_pin(MBED_CONF_NSAPI_DEFAULT_CELLULAR_SIM_PIN);
+#endif
+#ifdef MBED_CONF_NSAPI_DEFAULT_CELLULAR_PLMN
+    ctx->set_plmn(MBED_CONF_NSAPI_DEFAULT_CELLULAR_PLMN);
+#endif
+    ctx->set_credentials(MBED_CONF_NSAPI_DEFAULT_CELLULAR_APN, MBED_CONF_NSAPI_DEFAULT_CELLULAR_USERNAME, MBED_CONF_NSAPI_DEFAULT_CELLULAR_PASSWORD);
+
+    iface->set_blocking(BLOCKING_MODE);
+*/
     nsapi_error_t retcode = NSAPI_ERROR_NO_CONNECTION;
+    if (BLOCKING_MODE == 1) {
+        for (int i = 0; i < 1; i++) {
+            tr_error("[MAIN] START connect number: %d !", i);
+            /* Attempt to connect to a cellular network */
+            if (do_connect() == NSAPI_ERROR_OK) {
+                retcode = test_send_recv();
+                if (retcode) {
+                    retcode = iface->disconnect();
+                    tr_error("[MAIN] send/recv number: %d failed!", i);
+                    continue;
+                }
+            } else {
+                tr_error("[MAIN] Connect number: %d failed!", i);
+                continue;
+            }
 
-    /* Attempt to connect to a cellular network */
-    if (do_connect() == NSAPI_ERROR_OK) {
-        retcode = test_send_recv();
+            retcode = iface->disconnect();
+            if (retcode != NSAPI_ERROR_OK) {
+                tr_error("[MAIN] DisConnect number: %d failed with %d!", i, retcode);
+                continue;
+            }
+            tr_info("[MAIN] ITERATION %d DONE, wait 1 sec.", i);
+            wait(1);
+        }
+    } else {
+        iface->attach(cellular_callback);
+        for (int i = 0; i < 1; i++) {
+            tr_error("[MAIN] START connect number: %d !", i);
+            retcode = iface->connect();
+            tr_error("[MAIN] connect: %d number: %d !", retcode, i);
+            if (!retcode) {
+                while (1) {
+                    //tr_error("[MAIN] waiting for connect...: async_flag: %d", async_flag);
+                    if (async_flag) {
+                        tr_error("[MAIN] connected");
+                        break;
+                    }
+                    wait(1);
+                }
+                async_flag = 0;
+                retcode = test_send_recv();
+                tr_error("[MAIN] test_send_recv: %d number: %d !", retcode, i);
+            }
+
+            retcode = iface->disconnect();
+            tr_error("[MAIN] DisConnect: %d number: %d !", retcode, i);
+
+            wait(1);
+        }
     }
 
-    if (iface->disconnect() != NSAPI_ERROR_OK) {
-        print_function("\n\n disconnect failed.\n\n");
-    }
-
+    /*bg96->delete_context(ctx);
+    delete bg96;
+    delete serial;*/
     if (retcode == NSAPI_ERROR_OK) {
         print_function("\n\nSuccess. Exiting \n\n");
     } else {
         print_function("\n\nFailure. Exiting \n\n");
     }
+
+    //print_stuff();
+
+   /* int x = 0;
+    while(x < 60) {
+        wait(4);
+        x++;
+        tr_info("Waiting.... %d", x);
+    }*/
 
 #if MBED_CONF_MBED_TRACE_ENABLE
     trace_close();

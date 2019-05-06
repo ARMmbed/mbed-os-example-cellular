@@ -1,6 +1,6 @@
 {
     "config": {
-        "sock-type": "TCP",
+        "sock-type": "UDP",
         "echo-server-hostname": {
             "help": "Echo server host name.",
             "value": "\"echo.mbedcloudtesting.com\""
@@ -12,25 +12,32 @@
         "trace-level": {
             "help": "Options are TRACE_LEVEL_ERROR,TRACE_LEVEL_WARN,TRACE_LEVEL_INFO,TRACE_LEVEL_DEBUG",
             "macro_name": "MBED_TRACE_MAX_LEVEL",
-            "value": "TRACE_LEVEL_INFO"
+            "value": "TRACE_LEVEL_DEBUG"
         }
   },
     "target_overrides": {
         "*": {
             "target.network-default-interface-type": "CELLULAR",
-            "mbed-trace.enable": false,
+            "mbed-trace.enable": true,
             "lwip.ipv4-enabled": true,
             "lwip.ethernet-enabled": false,
-            "lwip.ppp-enabled": true,
+            "lwip.ppp-enabled": false,
             "lwip.tcp-enabled": true,
+            "lwip.debug-enabled": false,
+            "lwip.enable-ppp-trace": false,
+            "lwip.use-mbed-trace": false,
+            "QUECTEL_BG96.provide-default": true,
+            "QUECTEL_BC95.provide-default": false,
+            "UBLOX_N2XX.provide-default": false,
             "platform.stdio-convert-newlines": true,
             "platform.stdio-baud-rate": 115200,
-            "platform.default-serial-baud-rate": 115200,
             "platform.stdio-buffered-serial": true,
             "cellular.debug-at": false,
+            "cellular.use-apn-lookup": false,
+            "ppp-cell-iface.apn-lookup": false,
             "nsapi.default-cellular-plmn": 0,
             "nsapi.default-cellular-sim-pin": "\"1234\"",
-            "nsapi.default-cellular-apn": 0,
+            "nsapi.default-cellular-apn": "\"lpwa.telia.iot\"",
             "nsapi.default-cellular-username": 0,
             "nsapi.default-cellular-password": 0
         }
