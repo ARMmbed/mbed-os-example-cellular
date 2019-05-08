@@ -37,6 +37,7 @@ const char *host_name = MBED_CONF_APP_ECHO_SERVER_HOSTNAME;
 const int port = MBED_CONF_APP_ECHO_SERVER_PORT;
 
 static rtos::Mutex trace_mutex;
+static const char *if_name;
 
 #if MBED_CONF_MBED_TRACE_ENABLE
 static void trace_wait()
@@ -148,6 +149,10 @@ nsapi_error_t test_send_recv(CellularContext *ctx)
     // FOR MULTIHOMING we need to set sockopt to bind it to correct interface
     tr_debug("Settings socket options to interface %s", ctx->get_interface_name());
     retcode = sock.setsockopt(NSAPI_SOCKET, NSAPI_BIND_TO_DEVICE, ctx->get_interface_name(), strlen(ctx->get_interface_name()));
+
+    //tr_debug("Settings socket options to interface %s", if_name);
+    //retcode = sock.setsockopt(NSAPI_SOCKET, NSAPI_BIND_TO_DEVICE, if_name, strlen(if_name));
+
     if (retcode != NSAPI_ERROR_OK) {
 #if MBED_CONF_APP_SOCK_TYPE == TCP
         print_function("TCPSocket.open() fails, code: %d\n", retcode);
@@ -160,6 +165,8 @@ nsapi_error_t test_send_recv(CellularContext *ctx)
     SocketAddress sock_addr;
     //retcode = ctx->gethostbyname(host_name, &sock_addr); // or next line could be tested also. Both work but do we need to later for multihoming?
     retcode = ctx->gethostbyname(host_name, &sock_addr, NSAPI_UNSPEC, ctx->get_interface_name());
+    //retcode = ctx->gethostbyname(host_name, &sock_addr, NSAPI_UNSPEC, if_name);
+
     if (retcode != NSAPI_ERROR_OK) {
         print_function("Couldn't resolve remote host: %s, code: %d\n", host_name, retcode);
         return -1;
@@ -295,11 +302,10 @@ int main()
 
 
     SAMSUNG_S5JS100_RIL *s1 = new SAMSUNG_S5JS100_RIL();
-    CellularContext *ctx1 = s1->create_context(NULL, MBED_CONF_NSAPI_DEFAULT_CELLULAR_APN, false);
-    // !!! CHANGE APN TO DIFFERENT
-    CellularContext *ctx2 = s1->create_context(NULL, MBED_CONF_NSAPI_DEFAULT_CELLULAR_APN, false);
+    CellularContext *ctx1 = s1->create_context(NULL, "iot", false);
+    CellularContext *ctx2 = s1->create_context(NULL, "iot2", false);
 
-    nsapi_error_t err = test_data(s1, ctx1,  MBED_CONF_NSAPI_DEFAULT_CELLULAR_PLMN);
+    nsapi_error_t err = test_data(s1, ctx1,  NULL);
     if (err) {
         tr_error("Connect1 failed with: %d", err);
         err = ctx1->disconnect();
@@ -307,15 +313,17 @@ int main()
     }
     if (err == 0) {
         // !!! CHANGE PLMN TO DIFFERENT IF NEEDED
-        err = test_data(s1, ctx2, MBED_CONF_NSAPI_DEFAULT_CELLULAR_PLMN);
+        err = test_data(s1, ctx2, NULL);
         if (err) {
             tr_error("Connect2 failed with: %d", err);
         }
     }
 
     if (err == 0) {
+        //if_name = "if0";
         err = test_send_recv(ctx1);
         tr_debug("test and send 1: %d", err);
+        //if_name = "if1";
         err = test_send_recv(ctx2);
         tr_debug("test and send 2: %d", err);
     }
