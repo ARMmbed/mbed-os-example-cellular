@@ -279,7 +279,6 @@ void print_stuff()
 
 nsapi_error_t test_data(CellularDevice *device, CellularContext *ctx, const char *plmn)
 {
-    device->reset_stm();
     device->set_plmn(plmn);
     return ctx->connect();
 }
