@@ -147,11 +147,11 @@ nsapi_error_t test_send_recv(CellularContext *ctx)
 
     retcode = sock.open(ctx);
     // FOR MULTIHOMING we need to set sockopt to bind it to correct interface
-    tr_debug("Settings socket options to interface %s", ctx->get_interface_name());
-    retcode = sock.setsockopt(NSAPI_SOCKET, NSAPI_BIND_TO_DEVICE, ctx->get_interface_name(), strlen(ctx->get_interface_name()));
+    //tr_debug("Settings socket options to interface %s", ctx->get_interface_name());
+    //retcode = sock.setsockopt(NSAPI_SOCKET, NSAPI_BIND_TO_DEVICE, ctx->get_interface_name(), strlen(ctx->get_interface_name()));
 
-    //tr_debug("Settings socket options to interface %s", if_name);
-    //retcode = sock.setsockopt(NSAPI_SOCKET, NSAPI_BIND_TO_DEVICE, if_name, strlen(if_name));
+    tr_debug("Settings socket options to interface %s", if_name);
+    retcode = sock.setsockopt(NSAPI_SOCKET, NSAPI_BIND_TO_DEVICE, if_name, strlen(if_name));
 
     if (retcode != NSAPI_ERROR_OK) {
 #if MBED_CONF_APP_SOCK_TYPE == TCP
@@ -164,8 +164,8 @@ nsapi_error_t test_send_recv(CellularContext *ctx)
 
     SocketAddress sock_addr;
     //retcode = ctx->gethostbyname(host_name, &sock_addr); // or next line could be tested also. Both work but do we need to later for multihoming?
-    retcode = ctx->gethostbyname(host_name, &sock_addr, NSAPI_UNSPEC, ctx->get_interface_name());
-    //retcode = ctx->gethostbyname(host_name, &sock_addr, NSAPI_UNSPEC, if_name);
+    //retcode = ctx->gethostbyname(host_name, &sock_addr, NSAPI_UNSPEC, ctx->get_interface_name());
+    retcode = ctx->gethostbyname(host_name, &sock_addr, NSAPI_UNSPEC, if_name);
 
     if (retcode != NSAPI_ERROR_OK) {
         print_function("Couldn't resolve remote host: %s, code: %d\n", host_name, retcode);
@@ -320,10 +320,10 @@ int main()
     }
 
     if (err == 0) {
-        //if_name = "if0";
+        if_name = "rm0";
         err = test_send_recv(ctx1);
         tr_debug("test and send 1: %d", err);
-        //if_name = "if1";
+        if_name = "rm1";
         err = test_send_recv(ctx2);
         tr_debug("test and send 2: %d", err);
     }
