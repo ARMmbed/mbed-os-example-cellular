@@ -207,34 +207,31 @@ nsapi_error_t test_send_recv()
     return -1;
 }
 
-void run_example(NetworkInterface* interface)
+#define BLOCKING_MODE 1
+static int async_flag = 0;
+enum CurrentOp {
+	OP_INVALID,
+    OP_DEVICE_READY,
+    OP_SIM_READY,
+    OP_REGISTER,
+    OP_ATTACH
+};
+static CurrentOp op;
+#include "Semaphore.h"
+rtos::Semaphore semaphore;
+
+void print_stuff()
 {
-    iface = interface;
-    MBED_ASSERT(iface);
-
-    nsapi_error_t retcode = NSAPI_ERROR_NO_CONNECTION;
-
-    /* Attempt to connect to a cellular network */
-    if (do_connect() == NSAPI_ERROR_OK) {
-        retcode = test_send_recv();
-    }
-
-    if (iface->disconnect() != NSAPI_ERROR_OK) {
-        print_function("\n\n disconnect failed.\n\n");
-    }
-
     CellularContext *ctx = (CellularContext *)iface;
     CellularDevice *dev = ctx->get_device();
     CellularNetwork* nw = dev->open_network();
+
     int rssi = -1, ber = -1;
-    retcode = nw->get_signal_quality(rssi, &ber);
+    int retcode = nw->get_signal_quality(rssi, &ber);
     tr_info("[MAIN] get_signal_quality, err: %d, rssi: %d, ber: %d", retcode, rssi, ber);
 
     char buf[50];
     CellularInformation *info = dev->open_information();
-    retcode = info->get_serial_number(buf, 50, CellularInformation::SN);
-    tr_info("[MAIN] err: %d, SN: %s", retcode, buf);
-
     retcode = info->get_serial_number(buf, 50, CellularInformation::IMEI);
     tr_info("[MAIN] err: %d, IMEI: %s", retcode, buf);
 
@@ -244,20 +241,189 @@ void run_example(NetworkInterface* interface)
     retcode = info->get_imsi(buf, 50);
     tr_info("[MAIN] err: %d, imsi: %s", retcode, buf);
 
+    CellularNetwork::NWRegisteringMode mode = CellularNetwork::NWModeDeRegister;
+    retcode = nw->get_network_registering_mode(mode);
+    tr_info("[MAIN] err: %d, nwmode: %d", retcode, mode);
+
+    //retcode = nw->set_receive_period(1, CellularNetwork::EDRXEUTRAN_NB_S1_mode, 0x06);
+    //tr_info("[MAIN] set_receive_period: %d", retcode);
+
+    //retcode = dev->set_power_save_mode(40, 4);
+    //tr_info("[MAIN] set_power_save_mode: %d", retcode);
+
     retcode = info->get_iccid(buf, 50);
-    tr_info("[MAIN] err: %d, iccid: %s", retcode, buf);
+    tr_info("[MAIN] get_iccid: %d, iccid: %s", retcode, buf);
+
+    //retcode = dev->send_at_command("AT\r\n", 4);
+}
+
+void cellular_callback(nsapi_event_t ev, intptr_t ptr)
+{
+	// support for testing in non-blocking mode and step by step
+	if (ev >= NSAPI_EVENT_CELLULAR_STATUS_BASE && ev <= NSAPI_EVENT_CELLULAR_STATUS_END) {
+		cell_callback_data_t *ptr_data = (cell_callback_data_t *)ptr;
+		cellular_connection_status_t cell_ev = (cellular_connection_status_t)ev;
+		if (cell_ev == CellularDeviceReady && ptr_data->error == NSAPI_ERROR_OK && op == OP_DEVICE_READY) {
+			semaphore.release();
+		}
+		if (cell_ev == CellularSIMStatusChanged && ptr_data->error == NSAPI_ERROR_OK &&
+				   ptr_data->status_data == CellularDevice::SimStateReady && op == OP_SIM_READY) {
+			semaphore.release();
+		}
+		if (cell_ev == CellularRegistrationStatusChanged &&
+				(ptr_data->status_data == CellularNetwork::RegisteredHomeNetwork ||
+				ptr_data->status_data == CellularNetwork::RegisteredRoaming ||
+				ptr_data->status_data == CellularNetwork::AlreadyRegistered) &&
+				ptr_data->error == NSAPI_ERROR_OK &&
+				op == OP_REGISTER) {
+			semaphore.release();
+		}
+		if(cell_ev == CellularAttachNetwork  && ptr_data->status_data == CellularNetwork::Attached &&
+				ptr_data->error == NSAPI_ERROR_OK && op == OP_ATTACH) {
+			semaphore.release();
+		}
+	}
 
 
-    ////// START TEST PSMP    /////////
-    /*
-    retcode = dev->set_power_save_mode(40, 4);
-    while(1);*/
-    ////// END TEST PSMP    /////////
-    if (retcode == NSAPI_ERROR_OK) {
-        print_function("\n\nSuccess. Exiting \n\n");
+    if (ev >= NSAPI_EVENT_CELLULAR_STATUS_BASE && ev <= NSAPI_EVENT_CELLULAR_STATUS_END) {
+        cell_callback_data_t *data = (cell_callback_data_t *)ptr;
+        cellular_connection_status_t st = (cellular_connection_status_t)ev;
+        tr_error("[MAIN], Cellular event: %d, final try: %d", ev, data->final_try);
+        if (st == CellularRILATResponse) {
+            tr_error("[MAIN AT RESPONSE: %s, len: %d", (char*)data->data, data->status_data);
+        }
     } else {
-        print_function("\n\nFailure. Exiting \n\n");
+        tr_error("[MAIN], General event: %d", ev);
     }
+
+    if (ev == NSAPI_EVENT_CONNECTION_STATUS_CHANGE && ptr == NSAPI_STATUS_GLOBAL_UP) {
+        async_flag = 1;
+        tr_error("[MAIN], cellular_callback, GLOBAL UP, async_flag: %d", async_flag);
+    }
+    if (ev == NSAPI_EVENT_CONNECTION_STATUS_CHANGE && ptr == NSAPI_STATUS_DISCONNECTED) {
+        tr_error("[MAIN], cellular_callback, DISCONNECTED");
+    }
+}
+
+void run_example(NetworkInterface* interface)
+{
+    iface = interface;
+    CellularContext *ctx = (CellularContext *)iface;
+    //ctx->set_pdp_type("IPV6");
+
+    // sim pin, apn, credentials and possible plmn are taken automatically from json when using get_default_instance()
+	MBED_ASSERT(iface);
+	iface->set_blocking(BLOCKING_MODE);
+	iface->attach(cellular_callback);
+	nsapi_error_t retcode = NSAPI_ERROR_NO_CONNECTION;
+	CellularDevice *dev = ctx->get_device();
+	if (BLOCKING_MODE == 1) {
+		for (int i = 0; i < 1; i++) {
+			tr_info("[MAIN] START connect number: %d !", i);
+			retcode = do_connect();
+			if (retcode == NSAPI_ERROR_OK) {
+				retcode = test_send_recv();
+				if (retcode) {
+				    tr_error("[MAIN] send/recv number: %d failed with %d!", i, retcode);
+				    retcode = iface->disconnect();
+				    if (retcode != NSAPI_ERROR_OK) {
+				        tr_error("[MAIN] DisConnect number: %d failed with %d!", i, retcode);
+				    }
+					break;
+				}
+			} else {
+				tr_error("[MAIN] Connect number: %d failed with %d!", i, retcode);
+				break;
+			}
+			retcode = iface->disconnect();
+			if (retcode != NSAPI_ERROR_OK) {
+				tr_error("[MAIN] DisConnect number: %d failed with %d!", i, retcode);
+				break;
+			}
+			tr_info("[MAIN] ITERATION %d DONE, wait 1 sec.", i);
+			wait(1);
+		}
+	} else {
+		for (int i = 0; i < 1; i++) {
+			tr_info("[MAIN] START connect number: %d !", i);
+			retcode = iface->connect();
+			tr_info("[MAIN] connect: %d number: %d !", retcode, i);
+			if (!retcode) {
+				while (1) {
+					//tr_error("[MAIN] waiting for connect...: async_flag: %d", async_flag);
+					if (async_flag) {
+						tr_info("[MAIN] connected");
+						break;
+					}
+					wait(1);
+				}
+				async_flag = 0;
+				retcode = test_send_recv();
+				tr_info("[MAIN] test_send_recv: %d number: %d !", retcode, i);
+			}
+			retcode = iface->disconnect();
+			tr_info("[MAIN] DisConnect: %d number: %d !", retcode, i);
+			wait(1);
+		}
+	}
+
+	print_stuff();
+	wait(5);
+	retcode = dev->hard_power_off();
+	tr_info("[MAIN] hard_power_off: %d", retcode);
+	if (retcode == NSAPI_ERROR_OK) {
+		print_function("\n\nSuccess. Exiting \n\n");
+	} else {
+		print_function("\n\nFailure. Exiting \n\n");
+	}
+}
+
+void run_step_example(NetworkInterface* interface)
+{
+	iface = interface;
+	iface->set_blocking(BLOCKING_MODE);
+	iface->attach(cellular_callback);
+	CellularContext *ctx = (CellularContext *)iface;
+	if (!BLOCKING_MODE) {
+		op = OP_DEVICE_READY;
+	} else {
+		op = OP_INVALID;
+	}
+	nsapi_error_t err = ctx->set_device_ready();
+	tr_info("set_device_ready: %d", err);
+	int sema_err;
+	if (!BLOCKING_MODE) {
+		sema_err = semaphore.wait(50000);
+		tr_info("sema_err: %d", sema_err);
+		op = OP_SIM_READY;
+	}
+
+	err = ctx->set_sim_ready();
+	tr_info("set_sim_ready: %d", err);
+	if (!BLOCKING_MODE) {
+		sema_err = semaphore.wait(50000);
+		tr_info("sema_err: %d", sema_err);
+		op = OP_REGISTER;
+	}
+
+	err = ctx->register_to_network();
+	tr_info("register_to_network: %d", err);
+
+	if (!BLOCKING_MODE) {
+		sema_err = semaphore.wait(50000);
+		tr_info("sema_err: %d", sema_err);
+		op = OP_ATTACH;
+	}
+	wait(3);
+	err = ctx->attach_to_network();
+	tr_info("attach_to_network: %d", err);
+
+	if (!BLOCKING_MODE) {
+		sema_err = semaphore.wait(50000);
+		tr_info("sema_err: %d", sema_err);
+	}
+
+	run_example(iface);
 }
 
 #include "RDA_8955_PPP.h"

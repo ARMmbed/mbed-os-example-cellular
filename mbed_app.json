@@ -35,7 +35,7 @@
             "cellular.debug-at": true,
             "nsapi.default-cellular-plmn": 0,
             "nsapi.default-cellular-sim-pin": 0,
-            "nsapi.default-cellular-apn": "\"iot\"",
+            "nsapi.default-cellular-apn": "\"lpwa.telia.iot\"",
             "nsapi.default-cellular-username": 0,
             "nsapi.default-cellular-password": 0
         },
