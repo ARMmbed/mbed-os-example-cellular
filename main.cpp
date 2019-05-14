@@ -147,8 +147,9 @@ nsapi_error_t test_send_recv(CellularContext *ctx)
 
     retcode = sock.open(ctx);
     // FOR MULTIHOMING we need to set sockopt to bind it to correct interface
-    tr_debug("Settings socket options to interface %s", ctx->get_interface_name());
-    retcode = sock.setsockopt(NSAPI_SOCKET, NSAPI_BIND_TO_DEVICE, ctx->get_interface_name(), strlen(ctx->get_interface_name()));
+    char ifn[4];
+    tr_debug("Settings socket options to interface %s", ctx->get_interface_name(ifn));
+    retcode = sock.setsockopt(NSAPI_SOCKET, NSAPI_BIND_TO_DEVICE, ctx->get_interface_name(ifn), strlen(ctx->get_interface_name(ifn)));
 
     //tr_debug("Settings socket options to interface %s", if_name);
     //retcode = sock.setsockopt(NSAPI_SOCKET, NSAPI_BIND_TO_DEVICE, if_name, strlen(if_name));
@@ -164,7 +165,7 @@ nsapi_error_t test_send_recv(CellularContext *ctx)
 
     SocketAddress sock_addr;
     //retcode = ctx->gethostbyname(host_name, &sock_addr); // or next line could be tested also. Both work but do we need to later for multihoming?
-    retcode = ctx->gethostbyname(host_name, &sock_addr, NSAPI_UNSPEC, ctx->get_interface_name());
+    retcode = ctx->gethostbyname(host_name, &sock_addr, NSAPI_UNSPEC, ctx->get_interface_name(ifn));
     //retcode = ctx->gethostbyname(host_name, &sock_addr, NSAPI_UNSPEC, if_name);
 
     if (retcode != NSAPI_ERROR_OK) {
@@ -282,7 +283,6 @@ void print_stuff()
 }
 
 #include "SAMSUNG_S5JS100_RIL.h"
-#include "mbed_config.h"
 
 nsapi_error_t test_data(CellularDevice *device, CellularContext *ctx, const char *plmn)
 {
