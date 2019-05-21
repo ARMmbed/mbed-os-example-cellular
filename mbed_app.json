@@ -33,6 +33,12 @@
             "nsapi.default-cellular-apn": 0,
             "nsapi.default-cellular-username": 0,
             "nsapi.default-cellular-password": 0
+        },
+        "DISCO_L496AG": {
+            "target.macros_add": [
+                "CELLULAR_DEVICE=STModCellular"
+            ],
+            "stmod_cellular.provide-default": "true"
         }
     }
 }
