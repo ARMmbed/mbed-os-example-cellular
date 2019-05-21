@@ -16,6 +16,8 @@
 
 #include "mbed.h"
 #include "common_functions.h"
+#include "CellularNonIPSocket.h"
+#include "CellularDevice.h"
 #include "UDPSocket.h"
 #include "CellularLog.h"
 #include "CellularContext.h"
@@ -24,6 +26,7 @@
 
 #define UDP 0
 #define TCP 1
+#define NONIP 2
 
 // Number of retries /
 #define RETRY_COUNT 3
@@ -132,27 +135,58 @@ nsapi_error_t do_connect()
 }
 
 /**
- * Opens a UDP or a TCP socket with the given echo server and performs an echo
- * transaction retrieving current.
+ * Opens:
+ * - UDP or TCP socket with the given echo server and performs an echo
+ *   transaction retrieving current.
+ * - Cellular Non-IP socket for which the data delivery path is decided
+ *   by network's control plane CIoT optimisation setup, for the given APN.
  */
 nsapi_error_t test_send_recv()
 {
     nsapi_size_or_error_t retcode;
 #if MBED_CONF_APP_SOCK_TYPE == TCP
     TCPSocket sock;
-#else
+#elif MBED_CONF_APP_SOCK_TYPE == UDP
     UDPSocket sock;
+#elif MBED_CONF_APP_SOCK_TYPE == NONIP
+    CellularNonIPSocket sock;
 #endif
 
+#if MBED_CONF_APP_SOCK_TYPE == NONIP
+    retcode = sock.open((CellularContext*)iface);
+#else
     retcode = sock.open(iface);
+#endif
+
     if (retcode != NSAPI_ERROR_OK) {
 #if MBED_CONF_APP_SOCK_TYPE == TCP
         print_function("TCPSocket.open() fails, code: %d\n", retcode);
-#else
+#elif MBED_CONF_APP_SOCK_TYPE == UDP
         print_function("UDPSocket.open() fails, code: %d\n", retcode);
+#elif MBED_CONF_APP_SOCK_TYPE == NONIP
+        print_function("CellularNonIPSocket.open() fails, code: %d\n", retcode);
 #endif
         return -1;
     }
+
+    int n = 0;
+    const char *echo_string = "TEST";
+    char recv_buf[4];
+
+    sock.set_timeout(15000);
+
+#if MBED_CONF_APP_SOCK_TYPE == NONIP
+    retcode = sock.send((void*) echo_string, sizeof(echo_string));
+    if (retcode < 0) {
+        print_function("CellularNonIPSocket.send() fails, code: %d\n", retcode);
+        return -1;
+    } else {
+        print_function("CellularNonIPSocket: Sent %d Bytes\n", retcode);
+    }
+
+    n = sock.recv((void*) recv_buf, sizeof(recv_buf));
+
+#else
 
     SocketAddress sock_addr;
     retcode = iface->gethostbyname(host_name, &sock_addr);
@@ -163,10 +197,6 @@ nsapi_error_t test_send_recv()
 
     sock_addr.set_port(port);
 
-    sock.set_timeout(15000);
-    int n = 0;
-    const char *echo_string = "TEST";
-    char recv_buf[4];
 #if MBED_CONF_APP_SOCK_TYPE == TCP
     retcode = sock.connect(sock_addr);
     if (retcode < 0) {
@@ -196,6 +226,7 @@ nsapi_error_t test_send_recv()
 
     n = sock.recvfrom(&sock_addr, (void*) recv_buf, sizeof(recv_buf));
 #endif
+#endif
 
     sock.close();
 
@@ -211,6 +242,9 @@ void run_example(NetworkInterface* interface)
 {
     iface = interface;
     MBED_ASSERT(iface);
+
+    // sim pin, apn, credentials and possible plmn are taken automatically from json when using NetworkInterface::set_default_parameters()
+    iface->set_default_parameters();
 
     nsapi_error_t retcode = NSAPI_ERROR_NO_CONNECTION;
 
@@ -274,7 +308,11 @@ int main()
 
     // First with default interface
     print_function("\nEstablishing connection with default interface (nb-iot)...\n\n");
+#if MBED_CONF_APP_SOCK_TYPE == NONIP
+    run_example(CellularContext::get_default_nonip_instance());
+#else
     run_example(NetworkInterface::get_default_instance());
+#endif
 
 #if MBED_CONF_APP_TEST_RDA8955
     // Then with secondary interface
@@ -283,7 +321,6 @@ int main()
     RDA_8955_PPP device(&serial);
     CellularContext *context = device.create_context(NULL, NULL, MBED_CONF_CELLULAR_CONTROL_PLANE_OPT);
     MBED_ASSERT(context);
-    context->set_default_parameters();
     run_example(context);
 #endif
 
