@@ -189,7 +189,8 @@ nsapi_error_t test_send_recv()
 #else
 
     SocketAddress sock_addr;
-    retcode = iface->gethostbyname(host_name, &sock_addr);
+    char ifn[4]; // 2 characters + number + null mark
+    retcode = iface->gethostbyname(host_name, &sock_addr, NSAPI_UNSPEC, iface->get_interface_name(ifn));
     if (retcode != NSAPI_ERROR_OK) {
         print_function("Couldn't resolve remote host: %s, code: %d\n", host_name, retcode);
         return -1;
