@@ -173,7 +173,7 @@ nsapi_error_t test_send_recv()
     sock.set_timeout(15000);
 
 #if MBED_CONF_APP_SOCK_TYPE == NONIP
-    retcode = sock.send((void*) echo_string, sizeof(echo_string));
+    retcode = sock.send((void*) echo_string, strlen(echo_string));
     if (retcode < 0) {
         print_function("CellularNonIPSocket.send() fails, code: %d\n", retcode);
         return -1;
@@ -202,7 +202,7 @@ nsapi_error_t test_send_recv()
     } else {
         print_function("TCP: connected with %s server\n", host_name);
     }
-    retcode = sock.send((void*) echo_string, sizeof(echo_string));
+    retcode = sock.send((void*) echo_string, strlen(echo_string));
     if (retcode < 0) {
         print_function("TCPSocket.send() fails, code: %d\n", retcode);
         return -1;
@@ -213,7 +213,7 @@ nsapi_error_t test_send_recv()
     n = sock.recv((void*) recv_buf, sizeof(recv_buf));
 #else
 
-    retcode = sock.sendto(sock_addr, (void*) echo_string, sizeof(echo_string));
+    retcode = sock.sendto(sock_addr, (void*) echo_string, strlen(echo_string));
     if (retcode < 0) {
         print_function("UDPSocket.sendto() fails, code: %d\n", retcode);
         return -1;
