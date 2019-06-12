@@ -171,7 +171,8 @@ nsapi_error_t test_send_recv()
 
     int n = 0;
     const char *echo_string = "TEST";
-    char recv_buf[4];
+    char recv_buf[10];
+    memset(recv_buf, 0, sizeof(recv_buf));
 
     sock.set_timeout(15000);
 
@@ -234,6 +235,8 @@ nsapi_error_t test_send_recv()
     if (n > 0) {
         print_function("Received from echo server %d Bytes: %s\n", n, recv_buf);
         return 0;
+    } else {
+        print_function("Receive returned error %d\n", n);
     }
 
     return -1;
