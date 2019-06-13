@@ -12,16 +12,16 @@
         "trace-level": {
             "help": "Options are TRACE_LEVEL_ERROR,TRACE_LEVEL_WARN,TRACE_LEVEL_INFO,TRACE_LEVEL_DEBUG",
             "macro_name": "MBED_TRACE_MAX_LEVEL",
-            "value": "TRACE_LEVEL_INFO"
+            "value": "TRACE_LEVEL_DEBUG"
         }
   },
     "target_overrides": {
         "*": {
             "target.network-default-interface-type": "CELLULAR",
-            "mbed-trace.enable": false,
+            "mbed-trace.enable": true,
             "lwip.ipv4-enabled": true,
             "lwip.ethernet-enabled": false,
-            "lwip.ppp-enabled": true,
+            "lwip.ppp-enabled": false,
             "lwip.tcp-enabled": true,
             "platform.stdio-convert-newlines": true,
             "platform.stdio-baud-rate": 115200,
@@ -29,10 +29,20 @@
             "platform.stdio-buffered-serial": true,
             "cellular.debug-at": false,
             "nsapi.default-cellular-plmn": 0,
-            "nsapi.default-cellular-sim-pin": "\"1234\"",
-            "nsapi.default-cellular-apn": 0,
+            "nsapi.default-cellular-sim-pin": 0,
+            "nsapi.default-cellular-apn": "\"internet\"",
             "nsapi.default-cellular-username": 0,
-            "nsapi.default-cellular-password": 0
+            "nsapi.default-cellular-password": 0,
+            "QUECTEL_BG96.provide-default": true,
+            "cellular.radio-access-technology": 3,
+            "cellular.use-apn-lookup": false,
+            "ppp-cell-iface.apn-lookup": false,
+            "QUECTEL_BG96.tx": "p42",
+            "QUECTEL_BG96.rx": "p40",
+            "QUECTEL_BG96.cts": "p35",
+            "QUECTEL_BG96.rts": "p36",
+            "QUECTEL_BG96.pwr": "P1_6",
+            "QUECTEL_BG96.rst": "P1_5"
         }
     }
 }
