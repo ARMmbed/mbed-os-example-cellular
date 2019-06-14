@@ -108,11 +108,16 @@ def buildStep(target, compilerLabel, toolchain) {
             }
           }
 
-          execute ("mbed compile --build out/${target}_${toolchain}/ -m ${target} -t ${toolchain} -c --app-config ${config_file}")
+          execute ("mbed compile --build out/${target}_${toolchain}/ -m ${target} -t ${toolchain} -c --app-config ${config_file} \
+                   |tee ${target}_${toolchain}_build.txt")
+
+          execute ("cat ${target}_${toolchain}_build.txt |grep \"Total Static RAM memory\" |awk '{print \$8}' |cut -f1 -d'(' > ${target}_${toolchain}_RAM.log")
+          execute("cat ${target}_${toolchain}_build.txt |grep \"Total Flash memory\" |awk '{print \$7}' |cut -f1 -d'(' > ${target}_${toolchain}_ROM.log")
+
         }
         if ("${target}" == "MTB_ADV_WISE_1570" || "${target}" == "NRF52840_DK") {
           stash name: "${target}_${toolchain}", includes: '**/mbed-os-example-cellular.hex'
-          archive '**/mbed-os-example-cellular.hex'
+          archive '**/mbed-os-example-cellular.hex, **/*.log'
         }
         else {
           stash name: "${target}_${toolchain}", includes: '**/mbed-os-example-cellular.bin'
