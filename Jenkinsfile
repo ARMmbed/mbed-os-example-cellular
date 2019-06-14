@@ -18,14 +18,15 @@ if (env.MBED_OS_REVISION == '') {
 
 // Map RaaS instances to corresponding test suites
 def raas = [
-  "cellular_smoke_mtb_adv_wise_1570.json": "auli"
+  "cellular_smoke_nrf52840_dk.json": "auli"
 ]
 
 // Supported Modems
 def targets = [
-  "MTB_MTS_DRAGONFLY",
-  "UBLOX_C030_U201",
-  "MTB_ADV_WISE_1570"
+  //"MTB_MTS_DRAGONFLY",
+  //"UBLOX_C030_U201",
+  //"MTB_ADV_WISE_1570"
+  "NRF52840_DK"
 ]
 
 // Map toolchains to compilers
@@ -88,6 +89,11 @@ def buildStep(target, compilerLabel, toolchain) {
             execute("sed -i 's/\"platform.default-serial-baud-rate\": 115200,/\"platform.default-serial-baud-rate\": 9600,/' ${config_file}")
           }
 
+          // Required due to network tester
+          if ("${target}" == "NRF52840_DK") {
+            execute("sed -i 's/\"cellular.radio-access-technology\": 3,/\"cellular.radio-access-technology\": 9,/' ${config_file}")
+          }
+
           // Set mbed-os to revision received as parameter
           execute ("mbed deploy --protocol ssh")
           if (env.MBED_OS_REVISION != '') {
@@ -104,7 +110,7 @@ def buildStep(target, compilerLabel, toolchain) {
 
           execute ("mbed compile --build out/${target}_${toolchain}/ -m ${target} -t ${toolchain} -c --app-config ${config_file}")
         }
-        if ("${target}" == "MTB_ADV_WISE_1570") {
+        if ("${target}" == "MTB_ADV_WISE_1570" || "${target}" == "NRF52840_DK") {
           stash name: "${target}_${toolchain}", includes: '**/mbed-os-example-cellular.hex'
           archive '**/mbed-os-example-cellular.hex'
         }
