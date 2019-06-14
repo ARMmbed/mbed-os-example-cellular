@@ -235,6 +235,37 @@ nsapi_error_t test_send_recv()
     return -1;
 }
 
+#include "CellularDevice.h"
+#include "CellularInformation.h"
+void use_info(NetworkInterface &iface)
+{
+    CellularContext &ctx = (CellularContext&)iface;
+    CellularDevice *dev = ctx.get_device();
+
+    CellularInformation *info = dev->open_information();
+
+    char buf[50];
+    size_t buf_size = 50;
+    nsapi_error_t err = info->get_manufacturer(buf, buf_size);
+    tr_info("get_manufacturer, err: %d, buf: %s, buf_size: %d", err, buf, buf_size);
+
+    err = info->get_model(buf, buf_size);
+    tr_info("get_model, err: %d, buf: %s, buf_size: %d", err, buf, buf_size);
+
+    err = info->get_revision(buf, buf_size);
+    tr_info("get_revision, err: %d, buf: %s, buf_size: %d", err, buf, buf_size);
+
+    err = info->get_serial_number(buf, buf_size, CellularInformation::IMEI);
+    tr_info("get_serial_number(IMEI), err: %d, buf: %s, buf_size: %d", err, buf, buf_size);
+
+    err = info->get_imsi(buf, buf_size);
+    tr_info("get_imsi, err: %d, buf: %s, buf_size: %d", err, buf, buf_size);
+
+    err = info->get_iccid(buf, buf_size);
+    tr_info("get_iccid, err: %d, buf: %s, buf_size: %d", err, buf, buf_size);
+}
+
+
 int main()
 {
     print_function("\n\nmbed-os-example-cellular\n");
@@ -271,6 +302,8 @@ int main()
     if (iface->disconnect() != NSAPI_ERROR_OK) {
         print_function("\n\n disconnect failed.\n\n");
     }
+
+    use_info(*iface);
 
     if (retcode == NSAPI_ERROR_OK) {
         print_function("\n\nSuccess. Exiting \n\n");
