@@ -25,7 +25,8 @@ def raas = [
 def targets = [
   "MTB_MTS_DRAGONFLY",
   "UBLOX_C030_U201",
-  "MTB_ADV_WISE_1570"
+  "MTB_ADV_WISE_1570",
+  "NRF52840_DK"
 ]
 
 // Map toolchains to compilers
@@ -86,6 +87,17 @@ def buildStep(target, compilerLabel, toolchain) {
           if ("${target}" == "MTB_ADV_WISE_1570") {
             execute("sed -i 's/\"lwip.ppp-enabled\": true,/\"lwip.ppp-enabled\": false,/' ${config_file}")
             execute("sed -i 's/\"platform.default-serial-baud-rate\": 115200,/\"platform.default-serial-baud-rate\": 9600,/' ${config_file}")
+          }
+
+          if ("${target}" == "NRF52840_DK") {
+            //Take correct configuration from configuration store
+            execute("rm mbed_app.json")
+
+            dir("mbed-configurations-private") {
+              git url: "git@github.com:ARMmbed/mbed-configurations-private.git", branch:"master"
+            }
+
+            execute("cp mbed-configurations-private/NRF52840_DK/mbed-os-example-cellular/mbed_app.json .")
           }
 
           // Set mbed-os to revision received as parameter
