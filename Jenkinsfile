@@ -100,8 +100,15 @@ def buildStep(target, compilerLabel, toolchain) {
             execute("cp mbed-configurations-private/NRF52840_DK/mbed-os-example-cellular/mbed_app.json .")
           }
 
-          // Set mbed-os to revision received as parameter
-          execute ("mbed deploy --protocol ssh")
+          // A workaround for mbed-cli caching issues
+          try {
+            execute("mbed deploy --protocol ssh")
+          } catch (err) {
+              echo "mbed deploy failed - retrying after 10s"
+              sleep(10)
+              execute("mbed deploy --protocol ssh")
+          }
+
           if (env.MBED_OS_REVISION != '') {
             dir("mbed-os") {
               if (env.MBED_OS_REVISION.matches('pull/\\d+/head')) {
@@ -116,7 +123,7 @@ def buildStep(target, compilerLabel, toolchain) {
 
           execute ("mbed compile --build out/${target}_${toolchain}/ -m ${target} -t ${toolchain} -c --app-config ${config_file}")
         }
-        if ("${target}" == "MTB_ADV_WISE_1570") {
+        if ("${target}" == "MTB_ADV_WISE_1570" || "${target}" == "NRF52840_DK") {
           stash name: "${target}_${toolchain}", includes: '**/mbed-os-example-cellular.hex'
           archive '**/mbed-os-example-cellular.hex'
         }
