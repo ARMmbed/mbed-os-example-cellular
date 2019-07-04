@@ -19,10 +19,6 @@
         "*": {
             "target.network-default-interface-type": "CELLULAR",
             "mbed-trace.enable": false,
-            "lwip.ipv4-enabled": true,
-            "lwip.ethernet-enabled": false,
-            "lwip.ppp-enabled": true,
-            "lwip.tcp-enabled": true,
             "platform.stdio-convert-newlines": true,
             "platform.stdio-baud-rate": 115200,
             "platform.default-serial-baud-rate": 115200,
@@ -45,12 +41,9 @@
             "cellular.radio-access-technology": 3,
             "cellular.use-apn-lookup": false,
             "ppp-cell-iface.apn-lookup": false,
-            "lwip.ipv4-enabled": true,
-            "lwip.ipv6-enabled": false,
-            "lwip.ppp-enabled": false,
-            "lwip.tcp-enabled": false,
             "mbed-trace.enable": true,
             "cellular.debug-at": false
         }
-    }
+    },
+    "requires": ["bare-metal", "rtos-api", "cellular", "nsapi", "QUECTEL_BG96", "ppp-cell-iface", "nanostack-libservice", "mbed-trace", "events", "softdevice", "mbedtls", "mbed-client-randlib"]
 }
