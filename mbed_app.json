@@ -43,8 +43,9 @@
             "ppp-cell-iface.apn-lookup": false,
             "mbed-trace.enable": true,
             "cellular.debug-at": false,
-            "target.features_remove": ["CRYPTOCELL310"]
+            "target.features_remove": ["CRYPTOCELL310"],
+            "target.macros_remove": ["MBEDTLS_CONFIG_HW_SUPPORT"]
         }
     },
-    "requires": ["bare-metal", "rtos-api", "cellular", "nsapi", "QUECTEL_BG96", "ppp-cell-iface", "nanostack-libservice", "mbed-trace", "events", "softdevice"]
+    "requires": ["bare-metal", "rtos-api", "cellular", "nsapi", "QUECTEL_BG96", "ppp-cell-iface", "nanostack-libservice", "mbed-trace", "events", "softdevice", "mbedtls"]
 }
