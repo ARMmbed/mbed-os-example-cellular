@@ -42,8 +42,9 @@
             "cellular.use-apn-lookup": false,
             "ppp-cell-iface.apn-lookup": false,
             "mbed-trace.enable": true,
-            "cellular.debug-at": false
+            "cellular.debug-at": false,
+            "target.features_remove": ["CRYPTOCELL310"]
         }
     },
-    "requires": ["bare-metal", "rtos-api", "cellular", "nsapi", "QUECTEL_BG96", "ppp-cell-iface", "nanostack-libservice", "mbed-trace", "events", "softdevice", "mbedtls", "mbed-client-randlib"]
+    "requires": ["bare-metal", "rtos-api", "cellular", "nsapi", "QUECTEL_BG96", "ppp-cell-iface", "nanostack-libservice", "mbed-trace", "events", "softdevice"]
 }
