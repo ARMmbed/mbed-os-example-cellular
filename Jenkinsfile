@@ -108,6 +108,10 @@ def buildStep(target, compilerLabel, toolchain) {
             }
           }
 
+          dir("mbed-os-cellular") {
+            execute ("git checkout mem-opt-poc")
+          }
+
           execute ("mbed compile --build out/${target}_${toolchain}/ -m ${target} -t ${toolchain} -c --app-config ${config_file} \
                    |tee ${target}_${toolchain}_build.txt")
 
