@@ -28,14 +28,12 @@ $ cd mbed-os-example-cellular
 
 ### Change the network and SIM credentials
 
-See the file `mbed_app.json` in the root directory of your application. This file contains all the user specific configurations your application needs. Provide the pin code for your SIM card, as well as any APN settings if needed. For example:
+See the file `mbed_app.json` in the root directory of your application. This file contains all the user specific configurations your application needs. Provide the pin code for your SIM card, as well as any other cellular settings, or `null` if not used. For example:
 
 ```json
-        "nsapi.default-cellular-plmn": 0,
-        "nsapi.default-cellular-sim-pin": "\"1234\"",
-        "nsapi.default-cellular-apn": 0,
-        "nsapi.default-cellular-username": 0,
-        "nsapi.default-cellular-password": 0
+    "target_overrides": {
+        "*": {
+            "nsapi.default-cellular-sim-pin": "\"1234\"",
 ```
 
 ### Selecting socket type (TCP, UDP or NONIP)
@@ -85,6 +83,14 @@ Currently supported boards with onboard modem chips are:
 [u-blox C027](https://os.mbed.com/platforms/u-blox-C027/)
 [MultiTech MTS Dragonfly](https://os.mbed.com/platforms/MTS-Dragonfly/)
 
+For a cellular shield, you need to define which shield to use with `provide-default`, and also how the shield is connected to the Mbed OS board. For example, a generic AT/PPP modem would add from the `GENERIC_AT3GPP/mbed_lib.json` file to your `mbed_app.json`:
+```
+    "target_overrides": {
+       "GENERIC_AT3GPP.provide-default": true,
+       "GENERIC_AT3GPP.tx": "<tx-pinmap>",
+       "GENERIC_AT3GPP.rx": "<rx-pinmap>"
+    }
+```
 
 ## Compiling the application
 
@@ -132,7 +138,9 @@ Success. Exiting
 
 * Make sure the fields `nsapi.default-cellular-sim-pin`, `nsapi.default-cellular-plmn`, `nsapi.default-cellular-apn`, `nsapi.default-cellular-username` and `nsapi.default-cellular-password` from the `mbed_app.json` file are filled in correctly. The correct values should appear in the user manual of the board if using eSIM or in the details of the SIM card if using normal SIM.
 * Enable trace flag to have access to debug information `"mbed-trace.enable": true` and `"cellular.debug-at": true`.
-* Check that a default modem is defined, e.g. `"GENERIC_AT3GPP.provide-default": true`, `"GENERIC_AT3GPP.tx": "<tx-pinmap>"`, ...
+* Error Message: Assertion failed: iface usually means that a default modem is not defined, e.g. `"GENERIC_AT3GPP.provide-default": true`
+* If the modem does not respond to (AT) queries, check that UART pins (tx, rx, rts, cts) are connected and defined, e.g. `"GENERIC_AT3GPP.tx": "<tx-pinmap>"`, ...
+* It is a common case that a modem seems to connect fine with just USB power, but actually it needs to have an external power supply for a data connection.
 * Try both `TCP` and `UDP` socket types.
 * Try both `"lwip.ppp-enabled": true` and `"lwip.ppp-enabled": false`.
 * The modem may support only a fixed baud-rate, such as `"platform.default-serial-baud-rate": 9600`.
