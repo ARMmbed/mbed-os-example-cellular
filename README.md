@@ -130,8 +130,9 @@ Success. Exiting
 
 ## Troubleshooting
 
-* Make sure the fields `sim-pin-code`, `apn`, `username` and `password` from the `mbed_app.json` file are filled in correctly. The correct values should appear in the user manual of the board if using eSIM or in the details of the SIM card if using normal SIM.
-* Enable trace flag to have access to debug information `"mbed-trace.enable": true`.
+* Make sure the fields `nsapi.default-cellular-sim-pin`, `nsapi.default-cellular-plmn`, `nsapi.default-cellular-apn`, `nsapi.default-cellular-username` and `nsapi.default-cellular-password` from the `mbed_app.json` file are filled in correctly. The correct values should appear in the user manual of the board if using eSIM or in the details of the SIM card if using normal SIM.
+* Enable trace flag to have access to debug information `"mbed-trace.enable": true` and `"cellular.debug-at": true`.
+* Check that a default modem is defined, e.g. `"GENERIC_AT3GPP.provide-default": true`, `"GENERIC_AT3GPP.tx": "<tx-pinmap>"`, ...
 * Try both `TCP` and `UDP` socket types.
 * Try both `"lwip.ppp-enabled": true` and `"lwip.ppp-enabled": false`.
 * The modem may support only a fixed baud-rate, such as `"platform.default-serial-baud-rate": 9600`.
