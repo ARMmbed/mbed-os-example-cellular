@@ -78,15 +78,23 @@ def buildStep(target, compilerLabel, toolchain) {
     stage ("${target}_${compilerLabel}") {
       node ("${compilerLabel}") {
         deleteDir()
+
+        // Checkout scripts
+        dir("mbed-os-systemtest") {
+          git url: "git@github.com:ARMmbed/mbed-os-systemtest.git", branch:"master"
+        }
+
         dir("mbed-os-example-cellular") {
           checkout scm
           def config_file = "mbed_app.json"
+
+          // Sets correct SIM PIN and increases trace level for internal tests
+          execute("python ../mbed-os-systemtest/cellular/configuration-scripts/update-mbed-app-json.py")
 
           // Configurations for different targets
 
           if ("${target}" == "MTB_ADV_WISE_1570") {
             execute("sed -i 's/\"lwip.ppp-enabled\": true,/\"lwip.ppp-enabled\": false,/' ${config_file}")
-            execute("sed -i 's/\"platform.default-serial-baud-rate\": 115200,/\"platform.default-serial-baud-rate\": 9600,/' ${config_file}")
           }
 
           if ("${target}" == "NRF52840_DK") {
