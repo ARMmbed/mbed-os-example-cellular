@@ -88,8 +88,8 @@ def buildStep(target, compilerLabel, toolchain) {
           checkout scm
           def config_file = "mbed_app.json"
 
-		  // Sets correct SIM PIN and increases trace level for internal tests
-		  execute("python ../mbed-os-systemtest/cellular/configuration-scripts/update-mbed-app-json.py")
+          // Sets correct SIM PIN and increases trace level for internal tests
+          execute("python ../mbed-os-systemtest/cellular/configuration-scripts/update-mbed-app-json.py")
 
           // Configurations for different targets
 
