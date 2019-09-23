@@ -28,11 +28,11 @@
             "platform.default-serial-baud-rate": 115200,
             "platform.stdio-buffered-serial": true,
             "cellular.debug-at": false,
-            "nsapi.default-cellular-plmn": 0,
-            "nsapi.default-cellular-sim-pin": "\"1234\"",
-            "nsapi.default-cellular-apn": 0,
-            "nsapi.default-cellular-username": 0,
-            "nsapi.default-cellular-password": 0
+            "nsapi.default-cellular-sim-pin": null,
+            "nsapi.default-cellular-plmn": null,
+            "nsapi.default-cellular-apn": null,
+            "nsapi.default-cellular-username": null,
+            "nsapi.default-cellular-password": null
         }
     }
 }
