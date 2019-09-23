@@ -78,15 +78,18 @@ def buildStep(target, compilerLabel, toolchain) {
     stage ("${target}_${compilerLabel}") {
       node ("${compilerLabel}") {
         deleteDir()
+
+        // Checkout scripts
+        dir("mbed-os-systemtest") {
+          git url: "git@github.com:ARMmbed/mbed-os-systemtest.git", branch:"json-config-script"
+        }
+
         dir("mbed-os-example-cellular") {
           checkout scm
           def config_file = "mbed_app.json"
 
-          dir("mbed-os-systemtest") {
-            git url: "git@github.com:ARMmbed/mbed-os-systemtest.git", branch:"json-config-script"
-		  }
 		  // Sets correct SIM PIN and increases trace level for internal tests
-		  execute("python mbed-os-systemtest/cellular/configuration-scripts/update-mbed-app-json.py")
+		  execute("python ../mbed-os-systemtest/cellular/configuration-scripts/update-mbed-app-json.py")
 		  execute("cat mbed_app.json")
 
           // Configurations for different targets
