@@ -81,7 +81,7 @@ def buildStep(target, compilerLabel, toolchain) {
 
         // Checkout scripts
         dir("mbed-os-systemtest") {
-          git url: "git@github.com:ARMmbed/mbed-os-systemtest.git", branch:"json-config-script"
+          git url: "git@github.com:ARMmbed/mbed-os-systemtest.git", branch:"master"
         }
 
         dir("mbed-os-example-cellular") {
