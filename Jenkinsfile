@@ -90,7 +90,6 @@ def buildStep(target, compilerLabel, toolchain) {
 
 		  // Sets correct SIM PIN and increases trace level for internal tests
 		  execute("python ../mbed-os-systemtest/cellular/configuration-scripts/update-mbed-app-json.py")
-		  execute("cat mbed_app.json")
 
           // Configurations for different targets
 
