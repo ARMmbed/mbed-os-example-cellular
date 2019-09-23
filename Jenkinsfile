@@ -23,10 +23,10 @@ def raas = [
 
 // Supported Modems
 def targets = [
-  "MTB_MTS_DRAGONFLY",
-  "UBLOX_C030_U201",
-  "MTB_ADV_WISE_1570",
-  "NRF52840_DK"
+  //"MTB_MTS_DRAGONFLY",
+  //"UBLOX_C030_U201",
+  "MTB_ADV_WISE_1570"
+  //"NRF52840_DK"
 ]
 
 // Map toolchains to compilers
@@ -82,11 +82,17 @@ def buildStep(target, compilerLabel, toolchain) {
           checkout scm
           def config_file = "mbed_app.json"
 
+          dir("mbed-os-systemtest") {
+            git url: "git@github.com:ARMmbed/mbed-os-systemtest.git", branch:"json-config-script"
+		  }
+		  // Sets correct SIM PIN and increases trace level for internal tests
+		  execute("python mbed-os-systemtest/cellular/configuration-scripts/update-mbed-app-json.py")
+		  execute("cat mbed_app.json")
+
           // Configurations for different targets
 
           if ("${target}" == "MTB_ADV_WISE_1570") {
             execute("sed -i 's/\"lwip.ppp-enabled\": true,/\"lwip.ppp-enabled\": false,/' ${config_file}")
-            execute("sed -i 's/\"platform.default-serial-baud-rate\": 115200,/\"platform.default-serial-baud-rate\": 9600,/' ${config_file}")
           }
 
           if ("${target}" == "NRF52840_DK") {
