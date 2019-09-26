@@ -43,9 +43,6 @@
         },
         "EP_AGORA": {
             "target.features_add"           : ["LWIP"],
-            "target.features_remove"        : ["BLE"],
-            "target.extra_labels_remove"    : ["CORDIO", "CORDIO_LL", "NORDIC_CORDIO"],
-            "target.extra_labels_add"       : ["SOFTDEVICE_NONE"],
             "lwip.ipv6-enabled"             : true
         }
     }
