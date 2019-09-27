@@ -42,7 +42,6 @@
             "stmod_cellular.provide-default": "true"
         },
         "EP_AGORA": {
-            "target.features_add"           : ["LWIP"],
             "lwip.ipv6-enabled"             : true
         }
     }
