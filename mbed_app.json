@@ -20,6 +20,7 @@
             "target.network-default-interface-type": "CELLULAR",
             "mbed-trace.enable": false,
             "lwip.ipv4-enabled": true,
+            "lwip.ipv6-enabled": true,
             "lwip.ethernet-enabled": false,
             "lwip.ppp-enabled": true,
             "lwip.tcp-enabled": true,
@@ -40,9 +41,6 @@
             ],
             "target.components_add": ["STMOD_CELLULAR"],
             "stmod_cellular.provide-default": "true"
-        },
-        "EP_AGORA": {
-            "lwip.ipv6-enabled"             : true
         }
     }
 }
