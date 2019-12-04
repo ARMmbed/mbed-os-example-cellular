@@ -29,6 +29,7 @@
             "platform.default-serial-baud-rate": 115200,
             "platform.stdio-buffered-serial": true,
             "cellular.debug-at": false,
+            "cellular.use-apn-lookup": true,
             "nsapi.default-cellular-sim-pin": null,
             "nsapi.default-cellular-plmn": null,
             "nsapi.default-cellular-apn": null,
