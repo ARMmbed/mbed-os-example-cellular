@@ -76,12 +76,12 @@ After you have defined `mbed-trace.enable: true`, you can set trace levels by ch
 
 ### Board support
 
-The [cellular modem driver](https://github.com/ARMmbed/mbed-os/tree/master/features/cellular/framework/API) in this example uses PPP with an Mbed-supported external IP stack. It supports targets when modem exists on the Mbed Enabled target as opposed to plug-in modules (shields). For more details, please see our [Mbed OS cellular documentation](https://os.mbed.com/docs/mbed-os/latest/apis/cellular-api.html).
+The [cellular modem driver](https://github.com/ARMmbed/mbed-os/tree/master/features/cellular/framework/API) in this example uses PPP with an Mbed-supported external LwIP stack. It supports targets when modem exists on the Mbed Enabled target as opposed to plug-in modules (shields). For more details, please see our [Mbed OS cellular documentation](https://os.mbed.com/docs/mbed-os/latest/apis/cellular-api.html).
 
-Currently supported boards with onboard modem chips are:
+Currently supported boards with onboard modem chips can be found under Mbed OS [/targets folder](https://github.com/ARMmbed/mbed-os/tree/master/targets). You can find all cellular specific onboard modems by searching an overridden function  ```CellularDevice::get_target_default_instance()```.
 
-[u-blox C027](https://os.mbed.com/platforms/u-blox-C027/)
-[MultiTech MTS Dragonfly](https://os.mbed.com/platforms/MTS-Dragonfly/)
+Currently supported modem drivers (for plug-in shields) can be found under cellular [/targets folder](https://github.com/ARMmbed/mbed-os/tree/master/features/cellular/framework/targets).
+
 
 For a cellular shield, you need to define which shield to use with `provide-default`, and also how the shield is connected to the Mbed OS board. For example, a generic AT/PPP modem would add from the `GENERIC_AT3GPP/mbed_lib.json` file to your `mbed_app.json`:
 ```
