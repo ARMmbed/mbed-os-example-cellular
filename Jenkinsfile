@@ -18,7 +18,7 @@ if (env.MBED_OS_REVISION == '') {
 
 // Map RaaS instances to corresponding test suites
 def raas = [
-  "cellular_smoke_mtb_adv_wise_1570.json": "auli"
+  "cellular_smoke_mtb_adv_wise_1570.json": "levi"
 ]
 
 // Supported Modems
