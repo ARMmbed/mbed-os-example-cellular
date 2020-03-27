@@ -33,8 +33,7 @@ def targets = [
 // Map toolchains to compilers
 def toolchains = [
   ARM: "armcc",
-  GCC_ARM: "arm-none-eabi-gcc",
-  IAR: "iar_arm"
+  GCC_ARM: "arm-none-eabi-gcc"
   ]
 
 def stepsForParallel = [:]
