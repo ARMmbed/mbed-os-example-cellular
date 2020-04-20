@@ -23,7 +23,6 @@ def raas = [
 
 // Supported Modems
 def targets = [
-  "MTB_MTS_DRAGONFLY",
   "UBLOX_C030_U201",
   "MTB_ADV_WISE_1570",
   "NRF52840_DK",
