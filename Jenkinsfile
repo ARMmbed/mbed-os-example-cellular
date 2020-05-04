@@ -18,13 +18,12 @@ if (env.MBED_OS_REVISION == '') {
 
 // Map RaaS instances to corresponding test suites
 def raas = [
-  "cellular_smoke_mtb_adv_wise_1570.json": "levi"
+  "cellular_smoke_nrf52840_dk.json": "levi"
 ]
 
 // Supported Modems
 def targets = [
   "UBLOX_C030_U201",
-  "MTB_ADV_WISE_1570",
   "NRF52840_DK",
   "DISCO_L496AG"
 ]
@@ -91,11 +90,6 @@ def buildStep(target, compilerLabel, toolchain) {
           execute("python ../mbed-os-systemtest/cellular/configuration-scripts/update-mbed-app-json.py")
 
           // Configurations for different targets
-
-          if ("${target}" == "MTB_ADV_WISE_1570") {
-            execute("sed -i 's/\"lwip.ppp-enabled\": true,/\"lwip.ppp-enabled\": false,/' ${config_file}")
-          }
-
           if ("${target}" == "NRF52840_DK") {
             //Take correct configuration from configuration store
             execute("rm mbed_app.json")
@@ -130,7 +124,7 @@ def buildStep(target, compilerLabel, toolchain) {
 
           execute ("mbed compile --build out/${target}_${toolchain}/ -m ${target} -t ${toolchain} -c --app-config ${config_file}")
         }
-        if ("${target}" == "MTB_ADV_WISE_1570" || "${target}" == "NRF52840_DK") {
+        if ("${target}" == "NRF52840_DK") {
           stash name: "${target}_${toolchain}", includes: '**/mbed-os-example-cellular.hex'
           archive '**/mbed-os-example-cellular.hex'
         }
