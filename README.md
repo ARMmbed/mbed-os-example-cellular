@@ -1,3 +1,4 @@
+![](./resources/official_armmbed_example_badge.png)
 # Example cellular application for Mbed OS
 
 This is an example based on `mbed-os` cellular APIs that demonstrates a TCP or UDP echo transaction with a public echo server.
