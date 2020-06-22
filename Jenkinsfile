@@ -23,7 +23,6 @@ def raas = [
 
 // Supported Modems
 def targets = [
-  "UBLOX_C030_U201",
   "NRF52840_DK",
   "DISCO_L496AG"
 ]
