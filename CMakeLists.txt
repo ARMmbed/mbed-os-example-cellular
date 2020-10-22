@@ -24,8 +24,9 @@ target_sources(${APP_TARGET}
 )
 
 target_link_libraries(${APP_TARGET}
-    mbed-os
-    mbed-os-cellular
+    PRIVATE
+        mbed-os
+        mbed-cellular
 )
 
 mbed_generate_bin_hex(${APP_TARGET})
