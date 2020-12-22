@@ -1,0 +1,48 @@
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+
+# Executables
+*.exe
+*.out
+*.app
+
+.yotta.json
+BUILD
+yotta_modules/
+yotta_targets/
+.DS_Store
+
+# clion
+.idea/
+cmake-build-*/
+
+# exporters
+GettingStarted.html
+
+# mbed build system
+mbed-os/
+mbed_settings.py
+mbed_config.h
+*.pyc
+TARGET_CORDIO_BLUENRG/
+
