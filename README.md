@@ -11,9 +11,9 @@ This is an example based on `mbed-os` cellular APIs that demonstrates a TCP or U
 This particular cellular application uses a cellular network and network-socket APIs that are part of [`mbed-os`](https://github.com/ARMmbed/mbed-os).
 
 The program uses a [cellular modem driver](https://github.com/ARMmbed/mbed-os/tree/master/connectivity/cellular/include/cellular/framework/API)
-using an external IP stack (LWIP) standard 3GPP AT 27.007 AT commands to setup the cellular modem and registers to the network.
+using an external IP stack standard 3GPP AT 27.007 AT commands to setup the cellular modem and registers to the network.
 
-After registration, the driver opens a point-to-point protocol (PPP) pipe using LWIP with the cellular modem and connects
+After registration, the driver opens a point-to-point protocol (PPP) pipe with the cellular modem and connects
 to internet. This driver currently supports UART data connection type only between your cellular modem and MCU.
 
 For more information on Arm Mbed OS cellular APIs and porting guide, please visit the
@@ -22,16 +22,13 @@ For more information on Arm Mbed OS cellular APIs and porting guide, please visi
 
 ### Board support
 
-The cellular modem driver in this example uses PPP with an Mbed-supported external LwIP stack.
-It supports targets when modem exists on the Mbed Enabled target as opposed to plug-in modules (shields).
-
 Currently supported boards with onboard modem chips can be found under Mbed OS
 [/targets folder](https://github.com/ARMmbed/mbed-os/tree/master/targets).
 You can find all cellular specific onboard modems by searching an overridden function
 `CellularDevice::get_target_default_instance()`.
 
-Currently supported modem drivers (for plug-in shields) can be found under cellular
-[/driversfolder](https://github.com/ARMmbed/mbed-os/tree/master/connectivity/drivers/cellular).
+Currently supported modem drivers can be found under cellular
+[/drivers folder](https://github.com/ARMmbed/mbed-os/tree/master/connectivity/drivers/cellular).
 
 For a cellular shield, you need to define which shield to use with `provide-default`, and also how the shield is connected
 to the Mbed OS board. For example, a generic AT/PPP modem would add from the `GENERIC_AT3GPP/mbed_lib.json` file to your
@@ -142,7 +139,7 @@ Please have a client open and connected to the board. You may use:
 
 - screen or minicom for Linux (example usage: `screen /dev/serial/<your board> 115200`)
 
-- mbed tools have terminal command `mbed term -b 115200`
+- mbed tools has a terminal command `mbed term -b 115200`
 
 ### Expected output
 
