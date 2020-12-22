@@ -26,11 +26,11 @@
 #define NONIP 2
 
 #if MBED_CONF_APP_SOCK_TYPE == TCP
-static const char SOCKET_TYPE[] = "TCP";
+static constexpr char SOCKET_TYPE[] = "TCP";
 #elif MBED_CONF_APP_SOCK_TYPE == UDP
-static const char SOCKET_TYPE[] = "UDP";
+static constexpr char SOCKET_TYPE[] = "UDP";
 #elif MBED_CONF_APP_SOCK_TYPE == NONIP
-static const char SOCKET_TYPE[] = "CellularNonIP";
+static constexpr char SOCKET_TYPE[] = "CellularNonIP";
 #endif
 static const char ECHO_HOSTNAME[] = MBED_CONF_APP_ECHO_SERVER_HOSTNAME;
 
