@@ -131,15 +131,15 @@ After you have defined `mbed-trace.enable: true`, you can set trace levels by ch
 
 When example application is running information about activity is printed over the serial connection.
 
-**Note:** The default serial baudrate has been set to 115200.
+**Note:** The default serial baudrate has been set to 9600.
 
 Please have a client open and connected to the board. You may use:
 
 - [Tera Term](https://ttssh2.osdn.jp/index.html.en) for windows
 
-- screen or minicom for Linux (example usage: `screen /dev/serial/<your board> 115200`)
+- screen or minicom for Linux (example usage: `screen /dev/serial/<your board> 9600`)
 
-- mbed tools has a terminal command `mbed term -b 115200`
+- mbed tools has a terminal command `mbed term -b 9600`
 
 ### Expected output
 
