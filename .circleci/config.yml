@@ -64,7 +64,7 @@ jobs:
           python3 -m pip install mbed-tools --upgrade # remove after docker image is updated to contain new tools
           cd mbed-os-example-cellular
           mbed-tools compile -t GCC_ARM -m WIO_3G || exit 1
-          mbed-tools compile -t ARM -m DISCO_l496AG || exit 1
+          mbed-tools compile -t ARM -m WIO_3G || exit 1
 
 workflows:
   version: 2
