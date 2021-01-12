@@ -13,10 +13,7 @@ jobs:
           path: mbed-os-example-cellular
       - run: |
           cd mbed-os-example-cellular
-          git clone https://github.com/ARMmbed/mbed-os.git
-      - run:
-          working_directory: mbed-os-example-cellular
-          command: ln -s $PWD/../mbed-os mbed-os
+          mbed deploy
       - persist_to_workspace:
           root: /root/project
           paths: mbed-os-example-cellular
