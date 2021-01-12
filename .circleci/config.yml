@@ -23,7 +23,7 @@ jobs:
 
   build_disco_l496ag:
     docker:
-      - image: mbedos/mbed-os-env:stable
+      - image: mbedos/mbed-os-env:latest
     working_directory: ~
     steps:
       - attach_workspace:
@@ -35,7 +35,7 @@ jobs:
 
   build_wio_3g:
     docker:
-      - image: mbedos/mbed-os-env:stable
+      - image: mbedos/mbed-os-env:latest
     working_directory: ~
     steps:
       - attach_workspace:
@@ -47,7 +47,7 @@ jobs:
 
   cmake_disco_l496ag:
     docker:
-      - image: mbedos/mbed-os-env:stable
+      - image: mbedos/mbed-os-env:latest
     working_directory: ~
     steps:
       - attach_workspace:
@@ -60,7 +60,7 @@ jobs:
 
   cmake_wio_3g:
     docker:
-      - image: mbedos/mbed-os-env:stable
+      - image: mbedos/mbed-os-env:latest
     working_directory: ~
     steps:
       - attach_workspace:
