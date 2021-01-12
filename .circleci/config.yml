@@ -29,17 +29,6 @@ jobs:
           cd mbed-os-example-cellular
           mbed compile -t GCC_ARM -m DISCO_l496AG || exit 1
 
-  build_nrf52840_dk:
-    docker:
-      - image: mbedos/mbed-os-env:stable
-    working_directory: ~
-    steps:
-      - attach_workspace:
-          at: /root/project
-      - run: |
-          cd mbed-os-example-cellular
-          mbed compile -t GCC_ARM -m NRF52840_DK || exit 1
-
   build_wio_3g:
     docker:
       - image: mbedos/mbed-os-env:stable
@@ -50,7 +39,19 @@ jobs:
       - run: |
           cd mbed-os-example-cellular
           mbed compile -t GCC_ARM -m WIO_3G || exit 1
-          mbed compile -t ARM -m WIO_3G || exit 1
+
+  cmake_nrf52840_dk:
+    docker:
+      - image: mbedos/mbed-os-env:latest
+    working_directory: ~
+    steps:
+      - attach_workspace:
+          at: /root/project
+      - run: |
+          python3 -m pip install mbed-tools --upgrade # remove after docker image is updated to contain new tools
+          cd mbed-os-example-cellular
+          mbed-tools compile -t GCC_ARM -m NRF52840_DK || exit 1
+          mbed-tools compile -t ARM -m NRF52840_DK || exit 1
 
   cmake_disco_l496ag:
     docker:
@@ -89,10 +90,10 @@ workflows:
     - build_wio_3g:
         requires:
           - prepare
-    - build_nrf52840_dk:
-        requires:
-          - prepare
     # disabled until cmake filelist is fixed in mbed-os
+    #- cmake_nrf52840_dk:
+    #    requires:
+    #      - prepare
     #- cmake_disco_l496ag:
     #    requires:
     #      - prepare
