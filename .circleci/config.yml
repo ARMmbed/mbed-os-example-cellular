@@ -1,0 +1,66 @@
+
+#
+# Check https://circleci.com/docs/2.0/language-python/ for more details
+#
+version: 2
+jobs:
+  prepare:
+    docker:
+      - image: mbedos/mbed-os-env:latest
+    working_directory: ~
+    steps:
+      - checkout:
+          path: mbed-os-example-cellular
+      - run: |
+          cd mbed-os-example-cellular
+          git clone https://github.com/ARMmbed/mbed-os.git
+      - run:
+          working_directory: mbed-os-example-cellular
+          command: ln -s $PWD/../mbed-os mbed-os
+      - persist_to_workspace:
+          root: /root/project
+          paths: mbed-os-example-cellular
+
+  build_disco_l496ag:
+    docker:
+      - image: mbedos/mbed-os-env:stable
+    working_directory: ~
+    steps:
+      - attach_workspace:
+          at: /root/project
+      - run: |
+          python3 -m pip install mbed-tools --upgrade # remove after docker image is updated to contain new tools
+          cd mbed-os-example-cellular
+          mbed update
+          mbed compile -t GCC_ARM -m DISCO_l496AG || exit 1
+
+  build_wio_3g:
+    docker:
+      - image: mbedos/mbed-os-env:stable
+    working_directory: ~
+    steps:
+      - attach_workspace:
+          at: /root/project
+      - run: |
+          python3 -m pip install mbed-tools --upgrade # remove after docker image is updated to contain new tools
+          cd mbed-os-example-cellular
+          mbed update
+          mbed compile -t GCC_ARM -m WIO_3G || exit 1
+
+workflows:
+  version: 2
+  workflow:
+    jobs:
+    - prepare
+    - bbuild_disco_l496ag:
+        requires:
+          - prepare
+    - build_wio_3g:
+        requires:
+          - prepare
+    - cmake_disco_l496ag:
+        requires:
+          - preare
+    - cmake_wio_3g:
+        requires:
+          - prepare
