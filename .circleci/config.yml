@@ -49,6 +49,7 @@ jobs:
           at: /root/project
       - run: |
           cd mbed-os-example-cellular
+          python3 -m pip install mbed-cli --upgrade # remove after docker image is updated to contain new tools
           mbed compile -t GCC_ARM -m WIO_3G || exit 1
           mbed compile -t ARM -m WIO_3G || exit 1
 
