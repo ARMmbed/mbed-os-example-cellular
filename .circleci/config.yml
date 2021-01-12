@@ -29,7 +29,6 @@ jobs:
       - attach_workspace:
           at: /root/project
       - run: |
-          python3 -m pip install mbed-tools --upgrade # remove after docker image is updated to contain new tools
           cd mbed-os-example-cellular
           mbed update
           mbed compile -t GCC_ARM -m DISCO_l496AG || exit 1
@@ -42,10 +41,35 @@ jobs:
       - attach_workspace:
           at: /root/project
       - run: |
-          python3 -m pip install mbed-tools --upgrade # remove after docker image is updated to contain new tools
           cd mbed-os-example-cellular
           mbed update
           mbed compile -t GCC_ARM -m WIO_3G || exit 1
+
+  cmake_disco_l496ag:
+    docker:
+      - image: mbedos/mbed-os-env:stable
+    working_directory: ~
+    steps:
+      - attach_workspace:
+          at: /root/project
+      - run: |
+          python3 -m pip install mbed-tools --upgrade # remove after docker image is updated to contain new tools
+          cd mbed-os-example-cellular
+          mbed update
+          mbed-tools compile -t GCC_ARM -m DISCO_l496AG || exit 1
+
+  cmake_wio_3g:
+    docker:
+      - image: mbedos/mbed-os-env:stable
+    working_directory: ~
+    steps:
+      - attach_workspace:
+          at: /root/project
+      - run: |
+          python3 -m pip install mbed-tools --upgrade # remove after docker image is updated to contain new tools
+          cd mbed-os-example-cellular
+          mbed update
+          mbed-tools compile -t GCC_ARM -m WIO_3G || exit 1
 
 workflows:
   version: 2
