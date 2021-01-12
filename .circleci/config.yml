@@ -52,7 +52,7 @@ workflows:
   workflow:
     jobs:
     - prepare
-    - bbuild_disco_l496ag:
+    - build_disco_l496ag:
         requires:
           - prepare
     - build_wio_3g:
@@ -60,7 +60,7 @@ workflows:
           - prepare
     - cmake_disco_l496ag:
         requires:
-          - preare
+          - prepare
     - cmake_wio_3g:
         requires:
           - prepare
