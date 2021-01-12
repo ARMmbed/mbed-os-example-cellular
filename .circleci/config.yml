@@ -20,7 +20,7 @@ jobs:
 
   build_disco_l496ag:
     docker:
-      - image: mbedos/mbed-os-env:latest
+      - image: mbedos/mbed-os-env:stable
     working_directory: ~
     steps:
       - attach_workspace:
@@ -31,7 +31,7 @@ jobs:
 
   build_nrf52840_dk:
     docker:
-      - image: mbedos/mbed-os-env:latest
+      - image: mbedos/mbed-os-env:stable
     working_directory: ~
     steps:
       - attach_workspace:
@@ -42,14 +42,13 @@ jobs:
 
   build_wio_3g:
     docker:
-      - image: mbedos/mbed-os-env:latest
+      - image: mbedos/mbed-os-env:stable
     working_directory: ~
     steps:
       - attach_workspace:
           at: /root/project
       - run: |
           cd mbed-os-example-cellular
-          python3 -m pip install mbed-cli --upgrade # remove after docker image is updated to contain new tools
           mbed compile -t GCC_ARM -m WIO_3G || exit 1
           mbed compile -t ARM -m WIO_3G || exit 1
 
