@@ -1,102 +1,63 @@
+version: 2.1
 
-#
-# Check https://circleci.com/docs/2.0/language-python/ for more details
-#
-version: 2
 jobs:
   prepare:
     docker:
       - image: mbedos/mbed-os-env:latest
-    working_directory: ~
     steps:
-      - checkout:
-          path: mbed-os-example-cellular
+      - checkout
       - run: |
-          cd mbed-os-example-cellular
           mbed deploy
       - persist_to_workspace:
-          root: /root/project
-          paths: mbed-os-example-cellular
+          root: .
+          paths:
+            - .
 
-  build_disco_l496ag:
+  build_mbed:
     docker:
       - image: mbedos/mbed-os-env:stable
-    working_directory: ~
+    parameters:
+      toolchain:
+        type: string
+      target:
+        type: string
     steps:
       - attach_workspace:
-          at: /root/project
-      - run: |
-          cd mbed-os-example-cellular
-          mbed compile -t GCC_ARM -m DISCO_l496AG || exit 1
+          at: .
+      - run: mbed compile -t << parameters.toolchain >> -m << parameters.target >> || exit 1
 
-  build_wio_3g:
-    docker:
-      - image: mbedos/mbed-os-env:stable
-    working_directory: ~
-    steps:
-      - attach_workspace:
-          at: /root/project
-      - run: |
-          cd mbed-os-example-cellular
-          mbed compile -t GCC_ARM -m WIO_3G || exit 1
-
-  cmake_nrf52840_dk:
+  build_cmake:
     docker:
       - image: mbedos/mbed-os-env:latest
-    working_directory: ~
+    parameters:
+      toolchain:
+        type: string
+      target:
+        type: string
     steps:
       - attach_workspace:
-          at: /root/project
-      - run: |
-          python3 -m pip install mbed-tools --upgrade # remove after docker image is updated to contain new tools
-          cd mbed-os-example-cellular
-          mbed-tools compile -t GCC_ARM -m NRF52840_DK || exit 1
-          mbed-tools compile -t ARM -m NRF52840_DK || exit 1
-
-  cmake_disco_l496ag:
-    docker:
-      - image: mbedos/mbed-os-env:latest
-    working_directory: ~
-    steps:
-      - attach_workspace:
-          at: /root/project
-      - run: |
-          python3 -m pip install mbed-tools --upgrade # remove after docker image is updated to contain new tools
-          cd mbed-os-example-cellular
-          mbed-tools compile -t GCC_ARM -m DISCO_l496AG || exit 1
-          mbed-tools compile -t ARM -m DISCO_l496AG || exit 1
-
-  cmake_wio_3g:
-    docker:
-      - image: mbedos/mbed-os-env:latest
-    working_directory: ~
-    steps:
-      - attach_workspace:
-          at: /root/project
-      - run: |
-          python3 -m pip install mbed-tools --upgrade # remove after docker image is updated to contain new tools
-          cd mbed-os-example-cellular
-          mbed-tools compile -t GCC_ARM -m WIO_3G || exit 1
-          mbed-tools compile -t ARM -m WIO_3G || exit 1
+          at: .
+      - run: python3 -m pip install mbed-tools --upgrade # remove after docker image is updated to contain new tools
+      - run: mbed-tools compile -t << parameters.toolchain >> -m << parameters.target >> || exit 1
 
 workflows:
-  version: 2
   workflow:
     jobs:
-    - prepare
-    - build_disco_l496ag:
-        requires:
-          - prepare
-    - build_wio_3g:
-        requires:
-          - prepare
-    # disabled until cmake filelist is fixed in mbed-os
-    #- cmake_nrf52840_dk:
-    #    requires:
-    #      - prepare
-    #- cmake_disco_l496ag:
-    #    requires:
-    #      - prepare
-    #- cmake_wio_3g:
-    #    requires:
-    #      - prepare
+      - prepare
+      - build_mbed:
+          requires:
+            - prepare
+          matrix:
+            parameters:
+              target: ["DISCO_l496AG", "WIO_3G", "NRF52840_DK"]
+              toolchain: ["GCC_ARM"]
+          name: build-mbed-<< matrix.target >>-<< matrix.toolchain >>
+      # disabled until cmake is fixed in mbed-os
+      #- build_cmake:
+      #    requires:
+      #      - prepare
+      #    matrix:
+      #      parameters:
+      #        target: ["DISCO_l496AG", "WIO_3g", "NRF52840_DK"]
+      #        toolchain: ["GCC_ARM", "ARMC6"]
+      #    name: build-cmake-<< matrix.target >>-<< matrix.toolchain >>
