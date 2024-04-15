@@ -119,7 +119,7 @@ private:
             printf("Received from echo server %d Bytes\n", ret);
         }
 
-        _socket.close();
+        ret = _socket.close();
 
         if (ret != NSAPI_ERROR_OK) {
             printf("%sSocket.close() fails, code: %d\n", SOCKET_TYPE, ret);
